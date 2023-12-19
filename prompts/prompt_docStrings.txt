@@ -1,0 +1,27 @@
+
+I am requesting detailed docstrings and a functional example for the following Python code, with an adjustable level of detail based on a verbosity scale from 0 to 5. The meanings of each verbosity level are as follows:
+
+- 0: No comments or docstrings.
+- 1: Very brief, one-line comments for major functions and classes only.
+- 2: Concise but informative docstrings for classes and functions, covering basic purposes and functionality.
+- 3: Detailed docstrings including parameters, return types, and a description of the function or class behavior.
+- 4: Very detailed explanations, including usage examples in the docstrings.
+- 5: Extremely detailed docstrings, providing in-depth explanations, usage examples, and covering edge cases.
+
+The current verbosity level for this task is set to {verbosity_level} and should be used to determine the level of detail in your explanations. Additionally, please provide a code example demonstrating the functionality of the main class or a key function in the code.
+
+The output should be structured as a JSON object with two main parts: 'docstrings' and 'example'. The 'docstrings' part should contain key-value pairs where each key is the name of a class or function, and each value is a docstring that describes its purpose, consistent with the specified verbosity level. The 'example' part should include a piece of code demonstrating how to use the main class or a key function. The format of the JSON object should strictly adhere to this template:
+
+{
+    "docstrings": {
+        "ClassName": "Class description based on verbosity level.",
+        "function_name": "Function description based on verbosity level."
+    },
+    "example": "variable = function()\\nanother_call(variable2)"
+}
+
+Here is the Python code for which I need the docstrings and functional example, adhering to the verbosity level as per the configuration setting:
+
+{source_code}
+
+Please ensure that the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting in the configuration file.

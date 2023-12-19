@@ -1,0 +1,1 @@
+Some text\n{\n"docstrings": {\n"test": "This is a test function",\n},\n"example": "result = test()\\nprint(result)"\n}\nMore text
