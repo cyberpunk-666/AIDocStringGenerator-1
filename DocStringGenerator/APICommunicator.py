@@ -9,7 +9,7 @@ from DocStringGenerator.Utility import Utility
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 
 
-MOCK_RESPONSES_FILE = 'mock_bot.txt'
+
 
 @dataclass
 class APIResponse:
@@ -18,7 +18,7 @@ class APIResponse:
 
 class APICommunicator:
     _instance = None
-
+    MOCK_RESPONSES_FILE = 'mock_bot.txt'
     def __new__(cls, config: dict):
         if cls._instance is None:
             cls._instance = super(APICommunicator, cls).__new__(cls)
@@ -143,7 +143,7 @@ class APICommunicator:
     def ask_for_docstrings(self, source_code, config):
     
         if config['bot'] == 'file':
-            with open(MOCK_RESPONSES_FILE) as f:
+            with open(APICommunicator.MOCK_RESPONSES_FILE) as f:
                 response = f.read()
             is_valid = True    
         else:

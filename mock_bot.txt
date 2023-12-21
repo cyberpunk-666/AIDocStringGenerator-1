@@ -1,1 +1,11 @@
-Some text\n{\n"docstrings": {\n"test": "This is a test function",\n},\n"example": "result = test()\\nprint(result)"\n}\nMore text
+Some text
+{
+    "docstrings": {
+        "Test": "Class to contain test functions.",
+        "func1":"Adds two numbers together.",
+        "func2":"Checks sign of a number.",
+        "func3":"Sums the values in a list."
+    },
+    "example": "result = test()\nprint(result)"
+}
+More text

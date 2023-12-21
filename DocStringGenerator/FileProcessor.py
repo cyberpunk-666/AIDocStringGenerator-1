@@ -10,33 +10,6 @@ from typing import Dict
 from DocStringGenerator.Spinner import Spinner
 from DocStringGenerator.ResultThread import ResultThread
 
-class TextAccumulator:
-    def __init__(self):
-        self.parts = []
-
-    def add_line(self, line):
-        if len(self.parts) == 0:
-            self.parts.append([])
-        self.parts[-1].append(line)
-
-    def add_part(self):
-        self.parts.append([])
-
-    def get_all_parts(self):
-        return self.parts
-
-    def get_current_part(self):
-        return None if not self.parts else self.parts[-1]
-
-    def __len__(self):
-        return len(self.parts)
-    
-    def __getitem__(self, part_index):
-        if part_index < len(self.parts):
-            return ''.join(self.parts[part_index])
-        else:
-            raise IndexError("Part index out of range")
-        
     
 class FileProcessor:
     _instance = None
@@ -49,34 +22,28 @@ class FileProcessor:
         
     def __init__(self, config: dict):
         self._api_communicator = APICommunicator(config)
-        self.config = config
-    
-    def find_function_end_line(self, node):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return node.lineno, node.end_lineno
-        else:
-            return None, None    
+        self.config = config   
 
     def find_split_point(self, source_code: str, max_lines: int = 2048, start_node=None) -> int:
         if not start_node:        
-            try:
-                start_node = ast.parse(source_code)
-            except SyntaxError:
-                return len(source_code) // 2
+            start_node = ast.parse(source_code)
 
         split_point = self.find_split_point_in_children(start_node, max_lines)
         return split_point
 
-    def find_end_line(self, node):
+    def find_end_line(self, node, max_lines):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return node.end_lineno
+            if max_lines >= node.end_lineno:
+                return node.end_lineno
+            else:
+                return node.lineno - 1
         elif isinstance(node, ast.ClassDef):
             return node.lineno
         else:
             return -1
 
     def find_split_point_in_children(self, node, max_lines, recursive=True):
-        end_line = max(self.find_end_line(node), 0)
+        end_line = max(self.find_end_line(node, max_lines), 0)
         child_split_point = 0
         if max_lines >= end_line:
             child_split_point = end_line
@@ -87,7 +54,7 @@ class FileProcessor:
                         child_split_point = max(child_split_point or 0,
                                             self.find_split_point_in_children(child_node, max_lines, recursive))
                                         
-                    end_line = max(self.find_end_line(child_node), 0)
+                    end_line = max(self.find_end_line(child_node, max_lines), 0)
                     if max_lines >= end_line and end_line > child_split_point:                  
                         child_split_point = max(child_split_point or 0, end_line)
         if hasattr(node, "orelse") and not child_split_point:
@@ -97,7 +64,7 @@ class FileProcessor:
                         child_split_point = max(child_split_point or 0,
                                             self.find_split_point_in_children(child_node, max_lines, recursive))
                     
-                    end_line = max(self.find_end_line(child_node), 0)
+                    end_line = max(self.find_end_line(child_node, max_lines), 0)
                     if max_lines >= end_line and end_line > child_split_point:                  
                         child_split_point = max(child_split_point or 0, end_line)
         return child_split_point
@@ -119,14 +86,9 @@ class FileProcessor:
         for i in range(num_parts):
             next_split_line = (i+1) * lines_per_part
             next_split_line = self.find_split_point(source_code, next_split_line)
-            if next_split_line == -1:
-                raise SystemError("Error during code splitting")
-            # if next_split_line > 0:
-            #     next_split_line += 1
             if i == num_parts - 1 or next_split_line == -1:
                 next_split_line = num_lines
 
-            # Use a string builder for efficient accumulation
             part_builder = io.StringIO()
             for line in lines[current_line:next_split_line]:
                 part_builder.write(line)
@@ -164,10 +126,10 @@ class FileProcessor:
         from DocStringGenerator.DocstringProcessor import DocstringProcessor
         
         if config["verbose"]:
-            print(f'Processing file: {file_path}')
-        with open(file_path, 'r') as file:
+            print(f'Processing file: {str(file_path)}')
+        with open(str(file_path.absolute()), 'r') as file:
             source_code = file.read()
-        
+        file_path_str = str(file_path)
         task = ResultThread(target=APICommunicator(config).ask_for_docstrings, args=(source_code,config))
         task.start()
         if not config["verbose"]:
@@ -182,18 +144,18 @@ class FileProcessor:
                 docstrings, example, success = docstrings_tuple
                 if not success:                
                     if config["verbose"]:
-                        print(f'Failed to generate docstrings for {file_path}')
+                        print(f'Failed to generate docstrings for {file_path_str}')
                     return False
                 DocstringProcessor(config).insert_docstrings(file_path,docstrings)
                 if config["verbose"]:
-                    print(f'Inserted docstrings in {file_path}')
+                    print(f'Inserted docstrings in {file_path_str}')
             else:
                 if config["verbose"]:
-                    print(f'Failed to generate docstrings for {file_path}')
+                    print(f'Failed to generate docstrings for {file_path_str}')
                 return False
         else:
             if config["verbose"]:
-                print(f'No response received for file: {file_path}')
+                print(f'No response received for file: {file_path_str}')
             return False
         return True   
 

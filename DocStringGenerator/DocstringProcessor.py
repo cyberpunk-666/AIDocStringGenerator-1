@@ -23,24 +23,22 @@ class DocstringProcessor:
 
     def insert_docstrings(self, file_path: Path, docstrings: Dict[str, str]):
         """Insert docstrings into a Python source file."""
-        try:
-            content = file_path.read_text()
-            content_lines = content.splitlines()
-            tree = ast.parse(content)
 
-            insertions = self._prepare_insertions(tree, content_lines, docstrings)
+        content = file_path.read_text()
+        content_lines = content.splitlines()
+        tree = ast.parse(content)
 
-            new_content = []
-            for i, line in enumerate(content_lines):
-                new_content.append(line)
-                if i in insertions:
-                    # Add the formatted docstring after the class/function definition line
-                    new_content.append(insertions[i])
+        insertions = self._prepare_insertions(tree, content_lines, docstrings)
 
-            file_path.write_text("\n".join(new_content))
+        new_content = []
+        for i, line in enumerate(content_lines):
+            new_content.append(line)
+            if i in insertions:
+                # Add the formatted docstring after the class/function definition line
+                new_content.append(insertions[i])
 
-        except Exception as e:
-            logging.error(f"Failed to insert docstrings: {e}")
+        file_path.write_text("\n".join(new_content))
+
 
     def _prepare_insertions(self, tree, content_lines, docstrings):
         """Prepare the docstring insertions."""
