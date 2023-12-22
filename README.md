@@ -1,6 +1,6 @@
 ### AIDocStringGenerator: Overview and Purpose
 
-**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Claude and OpenAI GPT-3.5, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
+**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Claude and OpenAI GPT4-Turbo, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
 
 **Key Features**:
 
