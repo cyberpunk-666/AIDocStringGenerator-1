@@ -1,9 +1,13 @@
 {
-    "path": "./classTest.py",
-    "wipe_docstrings": false,
+    "path": "C:\\dev-fg\\AIDocStringGenerator\\DocStringGenerator",
+    "wipe_docstrings": true,
     "verbose": true,
-    "bot": "file",
-    "openai_api_key":"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",
+    "bot": "claude",    
+    "bot_response_file": "mock_bot2",
+    "bard_api_key":"dwjEgeuaC4jWnRr1aja6LNuULeFGg2sAK9061T8Lsspo861V3t-Z9hF0J2LMleY0jv5IOw.",
+    "openai_api_key":"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",
     "claude_api_key":"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",
-    "include_subfolders": false
+    "include_subfolders": false,
+    "verbosity_level": "5 for class and 2 for functions",
+    "keep_responses": true
 }

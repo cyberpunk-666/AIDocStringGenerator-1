@@ -1,5 +1,5 @@
-
-I am requesting detailed docstrings and a functional example for the following Python code, with an adjustable level of detail based on a verbosity scale from 0 to 5. The meanings of each verbosity level are as follows:
+I am requesting docstrings for specific Python functions and classes that currently lack documentation and a functional example for each classes in the following Python code, with an adjustable level of detail based on a verbosity scale from 0 to 5.
+The meanings of each verbosity level are as follows:
 
 - 0: No comments or docstrings.
 - 1: Very brief, one-line comments for major functions and classes only.
@@ -10,18 +10,31 @@ I am requesting detailed docstrings and a functional example for the following P
 
 The current verbosity level for this task is set to {verbosity_level} and should be used to determine the level of detail in your explanations. Additionally, please provide a code example demonstrating the functionality of the main class or a key function in the code.
 
-The output should be structured as a JSON object with two main parts: 'docstrings' and 'example'. The 'docstrings' part should contain key-value pairs where each key is the name of a class or function, and each value is a docstring that describes its purpose, consistent with the specified verbosity level. The 'example' part should include a piece of code demonstrating how to use the main class or a key function. The format of the JSON object should strictly adhere to this template:
+Please adhere to the following JSON format for the response, ensuring the usage of simple double quotes for strings:
 
 {
     "docstrings": {
-        "ClassName": "Class description based on verbosity level.",
-        "function_name": "Function description based on verbosity level."
+        "ClassName":{"docstring": "ClassName1 description",
+            "function1_name": "function1_name description",
+            "function2_name": "function2_name description"
+        }
+        "ClassName2":{"docstring": "ClassName2 description",
+            "function1_name": "function1_name description",
+            "function2_name": "function2_name description"
+        }
+
     },
-    "example": "variable = function()\\nanother_call(variable2)"
+    "examples": {
+        "example_ClassName": "variable = function_name()\\nprint(variable2)",
+        "example_ClassName2": "variable = function_name2()\\naprint(variable2)"
+    }
+
 }
+
 
 Here is the Python code for which I need the docstrings and functional example, adhering to the verbosity level as per the configuration setting:
 
 {source_code}
 
-Please ensure that the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting in the configuration file.
+Note: Only generate docstrings for functions and classes that currently lack them.
+Ensure the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting.

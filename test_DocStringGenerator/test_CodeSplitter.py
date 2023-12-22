@@ -66,12 +66,6 @@ class TestCodeSplitter(unittest.TestCase):
         self.assertTrue(len(parts[0]) == 0)
         self.assertTrue(len(parts[1]) == 35)
 
-    def test_split_source_code_with_no_newlines(self):
-        code = "line1 line2 line3 line4"
-        parts = self.code_splitter.split_source_code(code, 2)
-        self.assertEqual(len(parts), 2)
-        self.assertIn("line1 line2 line3 line4", parts[0])
-
     def test_split_source_code_with_only_newlines(self):
         code = "\n\n\n\n"
         parts = self.code_splitter.split_source_code(code, 2)

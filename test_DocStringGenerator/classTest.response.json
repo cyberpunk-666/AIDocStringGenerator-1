@@ -1,0 +1,1 @@
+"Some text\n{\n    \"docstrings\": {\n        \"Test\": \"Class to contain test functions.\",\n        \"func1\":\"Adds two numbers together.\",\n        \"func2\":\"Checks sign of a number.\",\n        \"func3\":\"Sums the values in a list.\"\n    },\n    \"example\": \"result = test()\\nprint(result)\"\n}\nMore text"

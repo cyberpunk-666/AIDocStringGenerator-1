@@ -16,13 +16,20 @@ from json.decoder import JSONDecodeError
 #         return "{}"
     
 def extract_json(input_string):
-    # Use a different pattern to capture escaped newlines
     pattern = r'\{((?:[^{}]+|{(?:[^{}]+)*})*)\}'
-    match = re.search(pattern, input_string, re.DOTALL)
-    if match:
-        return match.group()
-    else:
-        return "{}"
+    matches = re.findall(pattern, input_string, re.DOTALL)
+    json_objects = []
+
+    for match in matches:
+        try:
+            # Convert the matched string to a JSON object
+            json_obj = json.loads('{' + match + '}')
+            json_objects.append(json_obj)
+        except json.JSONDecodeError:
+            # Handle the case where the string is not a valid JSON
+            continue
+
+    return json_objects
     
 def validate_response(response):
     try:

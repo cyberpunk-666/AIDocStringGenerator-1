@@ -4,13 +4,15 @@ import json
 import sys
 
 class ConfigManager:
+    """The ConfigManager class is a singleton designed to manage configuration settings for an application. It ensures that only one instance of the ConfigManager can exist at any given time. The class provides methods to load or create a default configuration file and retrieve specific configurations, such as API keys and bot settings.\n\nAt verbosity level 5, the class docstring would include a comprehensive explanation of the class's purpose, its singleton nature, the structure of the default configuration, and the methods provided for interacting with the configuration file. It would also cover potential edge cases, such as what happens if the configuration file is missing or corrupted, and how the class handles different types of bots specified in the configuration."""
     _instance = None
     BOTS = {
         'gpt3.5': "gpt-3.5-turbo-1106",
         'gpt4': 'gpt-4',
         'gpt4-120k': "gpt-4-1106-preview", 
         'claude': 'claude-2.1',
-        'file': "mock_bot"
+        'file': "mock_bot",
+        'bard': 'bard'
     }
 
     def __new__(cls):
@@ -25,6 +27,7 @@ class ConfigManager:
         self.default_config = default_config
 
     def load_or_create_config(self) -> dict:
+        """Load the configuration from a file or create a default configuration if the file does not exist."""
         if self.config_path.exists():
             return self.get_config() 
         else:
@@ -33,11 +36,13 @@ class ConfigManager:
             sys.exit(0)
 
     def get_config(self) -> dict:
+        """Retrieve the configuration as a dictionary from the configuration file."""
         return json.loads(self.config_path.read_text())
     
 
     @staticmethod
     def get_model(bot):
+        """Return the model identifier for a given bot name."""
         if bot not in ConfigManager.BOTS:
             print(f'Invalid bot: {bot}') 
             return  

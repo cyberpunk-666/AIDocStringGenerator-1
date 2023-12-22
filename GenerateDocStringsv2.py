@@ -19,7 +19,6 @@ DEFAULT_CONFIG = {'path': 'path/to/directory/or/file', 'wipe_docstrings': True, 
 
 CONFIG_FILE = 'config.json'
 PROMPT_FILE = 'chatbot_prompt.txt'
-MOCK_RESPONSES_FILE = 'mock_bot.txt'
 
 def load_or_create_config():
     if os.path.exists(CONFIG_FILE):
@@ -319,7 +318,7 @@ def convert_newlines(content):
 def ask_for_docstrings(source_code, config):
     
     if config['bot'] == 'file':
-        with open(MOCK_RESPONSES_FILE) as f:
+        with open(config["bot_response_path"]) as f:
             response = f.read()
         is_valid = True    
     else:
@@ -423,6 +422,7 @@ def process_folder_or_file(config):
                         success = process_file(full_file_path, config)
                         if not success:
                             print(f'Failed to process {full_file_path}')
+
     elif os.path.isfile(path) and path.endswith('.py'):
         if config['wipe_docstrings']:
             wipe_docstrings(path)

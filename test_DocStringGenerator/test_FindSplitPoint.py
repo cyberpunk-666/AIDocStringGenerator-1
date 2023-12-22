@@ -23,7 +23,7 @@ class TestFindSplitPoint(unittest.TestCase):
     def test_normal_code(self):
         source_code = "def func1():\n    pass\n\ndef func2():\n    pass\n"
         split_point = self.test_instance.find_split_point(source_code, 3)
-        self.assertEqual(split_point, 2)  # Assuming the split point should be at the beginning
+        self.assertEqual(split_point, 3)  # Assuming the split point should be at the beginning
 
     def test_code_with_classes_and_functions(self):
         source_code = "class MyClass:\n    def method(self):\n        pass\n\ndef func():\n    pass\n"

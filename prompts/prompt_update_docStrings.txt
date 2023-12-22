@@ -1,0 +1,32 @@
+I am requesting docstrings for specific Python functions and classes that currently lack documentation. The required docstrings should be generated based on the following verbosity scale, ranging from 0 to 5, where each level represents:
+
+- 0: No comments or docstrings.
+- 1: Very brief, one-line comments for major functions and classes only.
+- 2: Concise but informative docstrings for classes and functions, covering basic purposes and functionality.
+- 3: Detailed docstrings including parameters, return types, and a description of the function or class behavior.
+- 4: Very detailed explanations, including usage examples in the docstrings.
+- 5: Extremely detailed docstrings, providing in-depth explanations, usage examples, and covering edge cases.
+
+The current verbosity level for this task is set to {verbosity_level}. This level should guide the detail and depth of the docstrings generated. The response should be structured as a JSON object with the 'docstrings' part, containing key-value pairs where each key is the name of a function or class without existing docstrings, and each value is the newly generated docstring consistent with the specified verbosity level.
+
+Please adhere to the following JSON format for the response, ensuring the usage of simple double quotes for strings:
+
+{
+    "docstrings": {
+        "ClassName":{"docstring": "ClassName1 description",
+            "function1_name": "function1_name description",
+            "function2_name": "function2_name description"
+        }
+        "ClassName2":{"docstring": "ClassName2 description",
+            "function1_name": "function1_name description",
+            "function2_name": "function2_name description"
+        }
+
+    }
+}
+
+Here is the Python code for which I need the docstrings, adhering to the verbosity level as per the configuration setting:
+
+{source_code}
+
+Note: Only generate docstrings for functions and classes that currently lack them. Ensure the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting.

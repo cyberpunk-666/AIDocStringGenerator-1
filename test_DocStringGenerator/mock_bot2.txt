@@ -1,0 +1,53 @@
+{
+    "docstrings": {
+        "APIResponse": {
+            "docstring": "A data class that represents the response from an API call. It contains the content of the response and a boolean indicating whether the response is valid or not.",
+            "content": "A string that holds the content of the API response.",
+            "is_valid": "A boolean that indicates whether the API response is valid or not."
+        },
+        "APICommunicator": {
+            "docstring": "A singleton class that handles communication with the API. It is responsible for making requests to the API and processing the responses. It also handles errors and retries in case of failures.",
+            "__new__": "A special method in Python classes that is called to create a new instance of the class. In this case, it is used to implement the singleton pattern, ensuring that only one instance of APICommunicator exists.",
+            "__init__": "Initializes the APICommunicator instance with the provided configuration. It also sets the URL for the Claude API.",
+            "ask_claude": "Makes a request to the Claude API with a given prompt and replacements. It handles the response and returns the completion from the API.",
+            "ask_claude_for_docstrings": "Generates a prompt for generating docstrings and makes a request to the Claude API. It returns the response from the API.",
+            "_parse_claude_response": "Parses the response from the Claude API and returns an APIResponse object.",
+            "_process_claude_line": "Processes a line from the Claude API response. If the line contains a completion, it is extracted and returned.",
+            "ask_openai": "Makes a request to the OpenAI API with a given prompt and replacements. It handles the response and returns the completion from the API.",
+            "ask_openai_for_docstrings": "Generates a prompt for generating docstrings and makes a request to the OpenAI API. It returns the response from the API.",
+            "ask_for_docstrings": "Determines which API to use based on the configuration and makes a request for docstrings. It handles the response and returns the docstrings and a boolean indicating whether the response is valid.",
+            "send_code_in_parts": "Sends the source code in parts to the API if the context length is exceeded. It handles the responses and returns the combined completions.",
+            "get_response_validity": "Checks the validity of the API response. It checks for context length exceeded, presence of docstrings, and correct response format."
+        },
+        "ConfigManager": {
+            "docstring": "A singleton class that manages the configuration for the application. It is responsible for loading and creating the configuration.",
+            "__new__": "A special method in Python classes that is called to create a new instance of the class. In this case, it is used to implement the singleton pattern, ensuring that only one instance of ConfigManager exists.",
+            "__init__": "Initializes the ConfigManager instance with the provided configuration path and default configuration.",
+            "load_or_create_config": "Loads the configuration from the configuration path if it exists, otherwise creates a new configuration with the default configuration.",
+            "get_config": "Loads and returns the configuration from the configuration path.",
+            "get_model": "Returns the model name for the given bot."
+        },
+        "DocstringProcessor": {
+            "docstring": "A singleton class that processes docstrings. It is responsible for inserting docstrings into the source code and validating the API response.",
+            "__new__": "A special method in Python classes that is called to create a new instance of the class. In this case, it is used to implement the singleton pattern, ensuring that only one instance of DocstringProcessor exists.",
+            "__init__": "Initializes the DocstringProcessor instance with the provided configuration.",
+            "insert_docstrings": "Inserts the generated docstrings into the source code at the appropriate locations.",
+            "_prepare_insertions": "Prepares the insertions for the docstrings in the source code.",
+            "_format_docstring": "Formats the docstring with the appropriate indentation.",
+            "_get_indent": "Returns the indentation level of a line of code.",
+            "_build_new_content": "Builds the new content of the source code with the inserted docstrings.",
+            "validate_response": "Validates the API response. It checks for correct response format and presence of docstrings.",
+            "extract_docstrings": "Extracts the docstrings from the API response."
+        },
+        "FileProcessor": {
+            "docstring": "A singleton class that processes files. It is responsible for processing Python files and directories, splitting source code into parts, and wiping existing docstrings.",
+            "__new__": "A special method in Python classes that is called to create a new instance of the class. In this case, it is used to implement the singleton pattern, ensuring that only one instance of FileProcessor exists.",
+            "__init__": "Initializes the FileProcessor instance with the provided configuration.",
+            "find_split_point": "Finds the split point in the source code to divide it into parts.",
+            "find_end_line": "Finds the end line of a node in the abstract syntax tree (AST).",
+            "find_split_point_in_children": "Finds the split point in the children of a node in the AST.",
+            "split_source_code": "Splits the source code into parts based on the number of parts specified.",
+            "log_processed_file": "Logs the path of a processed file.",
+            "is_file_processed": "Checks if a file has already been processed.",
+            "process_folder_or_file": "Processes a folder or a file. If it's a folder, it processes all Python files in the folder. If it's a file, it processes the file.",
+            "process_file": "Processes a Python file. It sends the source code to the API, receives the
