@@ -3,7 +3,10 @@ import unittest
 import ast
 from io import StringIO
 import sys
-sys.path.append('./DocStringGenerator')
+import os
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(f"{parent}")
 from pathlib import Path
 from DocStringGenerator.FileProcessor import FileProcessor
 

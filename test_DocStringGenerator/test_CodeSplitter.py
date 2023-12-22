@@ -1,4 +1,9 @@
 import unittest
+import sys
+import os
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(f"{parent}")
 from DocStringGenerator.FileProcessor import FileProcessor
 
 class TestCodeSplitter(unittest.TestCase):
