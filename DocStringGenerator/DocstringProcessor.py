@@ -1,3 +1,6 @@
+from unittest.mock import MagicMock, patch, ANY
+
+import re
 from typing import Dict, Tuple
 import ast
 import logging
@@ -26,7 +29,6 @@ class DocstringProcessor:
     def __init__(self, config: dict):
         self.config = config
 
-
     def insert_docstrings(self, file_path: Path, docstrings: Dict[str, Dict[str, str]]):
         content = file_path.read_text()
         content_lines = content.splitlines()
@@ -38,67 +40,120 @@ class DocstringProcessor:
         for i, line in enumerate(content_lines):
             new_content.append(line)
             if i in insertions:
-                new_content.append(insertions[i])
+                new_content.extend(insertions[i])  # Properly extend the list with the docstring lines
 
-        file_path.write_text("\n".join(new_content))
+        new_content = '\n'.join(new_content)
+        file_path.write_text(new_content)
+        return new_content
 
     def _prepare_insertions(self, tree, content_lines, docstrings):
         insertions = {}
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
                 start_line = node.lineno - 1
-                indent_level = self._get_indent(content_lines[start_line])
+                indent_level = 4 + self._get_indent(content_lines[start_line])
                 class_or_func_name = node.name
-                if class_or_func_name in docstrings:
-                    class_or_func_doc = docstrings[class_or_func_name]
-                    if "docstring" in class_or_func_doc:
-                        insertions[start_line] = self._format_docstring(class_or_func_doc["docstring"], indent_level)
-                    for item_name, item_doc in class_or_func_doc.items():
-                        if item_name != "docstring":  # handle method or nested function
-                            # additional logic to find the right line number and indentation for nested items
-                            pass
+
+                if isinstance(node, ast.ClassDef) and class_or_func_name in docstrings:
+                    class_doc = docstrings[class_or_func_name]
+                    if "docstring" in class_doc:
+                        insertions[start_line] = self._format_docstring(class_doc["docstring"], indent_level)
+
+                    if "methods" in class_doc:
+                        for method_name, method_doc in class_doc["methods"].items():
+                            for inner_node in node.body:
+                                if isinstance(inner_node, ast.FunctionDef) and inner_node.name == method_name:
+                                    inner_start_line = inner_node.lineno - 1
+                                    inner_indent_level = 4 + self._get_indent(content_lines[inner_start_line])
+                                    insertions[inner_start_line] = self._format_docstring(method_doc, inner_indent_level)
+
+                elif isinstance(node, ast.FunctionDef) and 'global_functions' in docstrings:
+                    if class_or_func_name in docstrings['global_functions']:
+                        func_doc = docstrings['global_functions'][class_or_func_name]
+                        insertions[start_line] = self._format_docstring(func_doc, indent_level)
+
         return insertions
 
-
-    def _format_docstring(self, docstring: str, indent: int) -> str:
-        """Format the docstring with appropriate indentation."""
-        spaces = " " * (indent) + "    " # Additional indentation inside the class/function
-        return f'{spaces}"""{docstring.strip()}"""'
-
-
-    def _get_indent(self, line: str) -> int:
-        """Determine the indentation level of a line of code."""
+    def _get_indent(self, line):
         return len(line) - len(line.lstrip())
 
+    def _format_docstring(self, docstring, indent_level):
+        indent = ' ' * indent_level
+        docstring_lines = docstring.splitlines()
 
-    def _build_new_content(self, content: str, insertions: Dict[int, str]) -> str:
-        """Build the new content for a file with docstring insertions."""
-        lines = content.splitlines()
-        new_content_lines = []
+        # If the docstring is multiline
+        if len(docstring_lines) > 1:
+            formatted_docstring = [f'{indent}"""{docstring_lines[0]}']
+            for line in docstring_lines[1:-1]:
+                formatted_docstring.append(f'{indent}{line}')
+            # Append the last line along with the closing triple quotes
+            formatted_docstring.append(f'{indent}{docstring_lines[-1]}"""')
+        else:
+            # If the docstring is a single line, keep it on one line with the closing triple quotes
+            formatted_docstring = [f'{indent}"""{docstring}"""']
 
-        for i, line in enumerate(lines):
-            if i in insertions:
-                new_content_lines.append(insertions[i])
-            new_content_lines.append(line)
-
-        return "\n".join(new_content_lines)
+        return formatted_docstring
 
 
-    def validate_response(self, responses):
-        for response in responses:
-            try:
-                json_objects = Utility.extract_json(response)
-                for data in json_objects:
-                    if not isinstance(data.get("docstrings", {}), dict):
-                        return False
-                    for class_name, class_doc in data["docstrings"].items():
-                        if not isinstance(class_doc, dict) or "docstring" not in class_doc:
-                            return False
-                    if "examples" not in data:
-                        return False
-            except json.JSONDecodeError:
+            
+    def validate_response(self, response, config):
+        try:
+            json_object, is_valid, error_message = Utility.parse_json(response)
+            if not is_valid:
+                if config["verbose"]:
+                    print(f"Invalid response: {response}\nError: {error_message}")
                 return False
+
+            if config["verbose"]:
+                print("Validating docstrings...")
+
+            # Validate docstrings
+            docstrings = json_object.get("docstrings", {})
+            if not isinstance(docstrings, dict):
+                if config["verbose"]:
+                    print("Invalid format: 'docstrings' should be a dictionary.")
+                return False
+
+            # Validate each class and global functions
+            for key, value in docstrings.items():
+                if key == "global_functions":
+                    if not isinstance(value, dict):
+                        if config["verbose"]:
+                            print(f"Invalid format: Global functions under '{key}' should be a dictionary.")
+                        return False
+                else:
+                    if not isinstance(value, dict) or "docstring" not in value:
+                        if config["verbose"]:
+                            print(f"Invalid format: Class '{key}' should contain a 'docstring'.")
+                        return False
+                    if "methods" in value and not isinstance(value["methods"], dict):
+                        if config["verbose"]:
+                            print(f"Invalid format: Methods under class '{key}' should be a dictionary.")
+                        return False
+
+            if config["verbose"]:
+                print("Validating examples...")
+
+            # Validate examples
+            if "examples" in json_object and not isinstance(json_object["examples"], dict):
+                if config["verbose"]:
+                    print("Invalid format: 'examples' should be a dictionary.")
+                return False
+
+            if config["verbose"]:
+                print(f"Validation successful for response: {response}")
+
+        except json.JSONDecodeError:
+            if config["verbose"]:
+                print(f"JSON decoding error encountered for response: {response}")
+            return False
+
+        if config["verbose"]:
+            print("Response validated successfully.")
+
         return True
+
+
     
     def deep_merge_dict(self, dct1, dct2):
         """
@@ -128,14 +183,25 @@ class DocstringProcessor:
 
         for response in responses:
             try:
+                response_object, is_valid, error_message = Utility.parse_json(response)
+                if not is_valid:
+                    if config["verbose"]:
+                        print(f"Invalid response: {response},\nError: {error_message}")
+                    continue
                 if config["verbose"]:
-                    print(f"Extracted json string: {response}")
-                data = json.loads(response)
-                json_objects.append(data)
+                    print(f"Extracted json object: {response_object}")
+
+                json_objects.append(response_object)
             except (IndexError, ValueError, SyntaxError) as e:
                 if config["verbose"]:
                     print(f'Error extracting docstrings: {e}')
                 continue
 
         merged_data = self.merge_json_objects(json_objects)
-        return merged_data["docstrings"], merged_data["examples"], True
+        
+        # Extract docstrings from merged data
+        docstrings = merged_data.get("docstrings")
+
+        if docstrings is None:
+            return None, False
+        return docstrings, True

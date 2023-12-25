@@ -1,0 +1,10 @@
+{
+    "docstrings": {
+        "Test": {
+            "example": "result = test()\nprint(result)",
+            "methods": {
+                "func3": "Sums the values in a list."
+            }
+        }
+    }
+}

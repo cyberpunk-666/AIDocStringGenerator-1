@@ -7,6 +7,7 @@ current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
+from dotenv import load_dotenv
 
 from DocStringGenerator.APICommunicator import APICommunicator
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
@@ -19,6 +20,7 @@ from DocStringGenerator.Utility import *
 class TestFindSplitPoint(unittest.TestCase):
     
     def setUp(self):
+        load_dotenv()
         self.config = {"verbose": False}
         self.test_instance = FileProcessor(self.config)
         

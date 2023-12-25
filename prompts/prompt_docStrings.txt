@@ -14,21 +14,27 @@ Please adhere to the following JSON format for the response, ensuring the usage 
 
 {
     "docstrings": {
-        "ClassName":{"docstring": "ClassName1 description",
-            "function1_name": "function1_name description",
-            "function2_name": "function2_name description"
+        "ClassName": {
+            "docstring": "ClassName description",
+            "example": "variable = ClassName.function1_name()\\nprint(variable)",
+            "methods": {
+                "function1_name": "function1_name description",
+                "function2_name": "function2_name description"
+            }
+        },
+        "ClassName2": {
+            "docstring": "ClassName2 description",
+            "example": "variable = ClassName2.function1_name()\\nprint(variable)",
+            "methods": {
+                "function1_name": "function1_name description",
+                "function2_name": "function2_name description"
+            }
+        },
+        "global_functions": {
+            "global_function1": "global_function1 description",
+            "global_function2": "global_function2 description"
         }
-        "ClassName2":{"docstring": "ClassName2 description",
-            "function1_name": "function1_name description",
-            "function2_name": "function2_name description"
-        }
-
-    },
-    "examples": {
-        "example_ClassName": "variable = function_name()\\nprint(variable2)",
-        "example_ClassName2": "variable = function_name2()\\naprint(variable2)"
     }
-
 }
 
 

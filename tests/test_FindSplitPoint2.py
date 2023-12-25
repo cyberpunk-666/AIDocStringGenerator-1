@@ -9,10 +9,12 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
 from DocStringGenerator.FileProcessor import FileProcessor
+from dotenv import load_dotenv
 
 class TestSourceCodeSplitting(unittest.TestCase):
 
     def setUp(self):
+        load_dotenv()
         self.config = {"verbose": False}
         self.instance = FileProcessor(self.config)
 
@@ -113,6 +115,7 @@ class TestSourceCodeSplittingAdvanced(unittest.TestCase):
 
 
     def setUp(self):
+        load_dotenv()
         self.config = {"verbose": False}
         self.instance = FileProcessor(self.config)
 

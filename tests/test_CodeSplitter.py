@@ -5,10 +5,12 @@ current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from DocStringGenerator.FileProcessor import FileProcessor
+from dotenv import load_dotenv
 
 class TestCodeSplitter(unittest.TestCase):
     
     def setUp(self):
+        load_dotenv()
         self.config = {"verbose": False}
         self.code_splitter = FileProcessor(self.config)
 

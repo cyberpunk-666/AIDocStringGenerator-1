@@ -16,25 +16,51 @@ from json.decoder import JSONDecodeError
 #         return "{}"
     
 def extract_json(input_string):
-    pattern = r'\{((?:[^{}]+|{(?:[^{}]+)*})*)\}'
-    matches = re.findall(pattern, input_string, re.DOTALL)
-    json_objects = []
+    json_strings = []
+    brace_count = 0
+    in_string = False
+    escape = False
+    start_index = None
 
-    for match in matches:
-        try:
-            # Convert the matched string to a JSON object
-            json_obj = json.loads('{' + match + '}')
-            json_objects.append(json_obj)
-        except json.JSONDecodeError:
-            # Handle the case where the string is not a valid JSON
+    for i, char in enumerate(input_string):
+        if char == '"' and not escape:
+            in_string = not in_string
+        elif char == '\\' and in_string:
+            escape = not escape
             continue
+        elif char == '{' and not in_string:
+            brace_count += 1
+            if brace_count == 1:
+                start_index = i
+        elif char == '}' and not in_string:
+            brace_count -= 1
+            if brace_count == 0 and start_index is not None:
+                json_strings.append(input_string[start_index:i+1])
+                start_index = None
+        if char != '\\':
+            escape = False
 
-    return json_objects
+    return json_strings
+
+
+def parse_json(json_strings):
+    json_objects = []
+    is_valid = True
+
+    for json_str in json_strings:
+        try:
+            json_obj = json.loads(json_str)
+            json_objects.append(json_obj)
+        except json.JSONDecodeError as e:
+            print(f"Invalid JSON: {json_str}\nError: {e}")
+            is_valid = False
+
+    return json_objects, is_valid
     
 def validate_response(response):
     try:
         json_str = extract_json(response)
-        data = json.loads(json_str)
+        data = parse_json(json_str)
 
         if not isinstance(data["docstrings"], dict):
             return False

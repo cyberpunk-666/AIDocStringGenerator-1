@@ -10,6 +10,7 @@ from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from typing import Dict
 from DocStringGenerator.Spinner import Spinner
 from DocStringGenerator.ResultThread import ResultThread
+from DocStringGenerator.Utility import Utility
 
 FILES_PROCESSED_LOG = "files_processed.log"
     
@@ -126,12 +127,12 @@ The class is initialized with a configuration dictionary that contains settings 
             log_file.write('\n'.join(processed_files))
 
 
-    def is_file_processed(self, file_path):
+    def is_file_processed(self, file_name, log_file_path=None):
         """Checks if a file has already been processed by looking at a log file."""
         try:
-            with open(FILES_PROCESSED_LOG, 'r') as log_file:
+            with open(log_file_path or FILES_PROCESSED_LOG, 'r') as log_file:
                 processed_files = log_file.read().splitlines()
-            return file_path in processed_files
+            return file_name in processed_files
         except FileNotFoundError:
             return False
 
@@ -166,8 +167,8 @@ The class is initialized with a configuration dictionary that contains settings 
         """Processes a single Python file to generate and insert docstrings."""
         from DocStringGenerator.APICommunicator import APICommunicator
         from DocStringGenerator.DocstringProcessor import DocstringProcessor
-        
-        processed = self.is_file_processed(file_path)
+        file_name = os.path.basename(file_path)
+        processed = self.is_file_processed(file_name)
         if processed:
             if config["verbose"]:
                 print(f'File {str(file_path)} already processed. Skipping.')
@@ -186,10 +187,10 @@ The class is initialized with a configuration dictionary that contains settings 
             spinner.stop()
         task.join()
         if task.result:
-            response, is_valid = task.result
+            responses, is_valid = task.result
             if is_valid:                
-                docstrings_tuple = DocstringProcessor(config).extract_docstrings(response, config)
-                docstrings, examples, success = docstrings_tuple
+                docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
+                docstrings, success = docstrings_tuple
                 if config["keep_responses"]:
                     print(f'Extracted docstrings: {docstrings}')
                     self.save_response(file_path, docstrings, examples)
@@ -202,14 +203,14 @@ The class is initialized with a configuration dictionary that contains settings 
                 if config["verbose"]:
                     print(f'Inserted docstrings in {file_path_str}')
 
-                parsed_examples = self.parse_examples_from_response(examples)
-                success, failed_function_name = self.add_example_functions_to_classes(parsed_examples, config)
+                parsed_examples = self.parse_examples_from_response(docstrings)
+                success, failed_function_names = self.add_example_functions_to_classes(file_path, parsed_examples, config)
                 if not success:
                     if config["verbose"]:
-                        print(f'Failed to add example function to class {failed_function_name}. Retry.')
-                    response = self._api_communicator.ask_examples_again(class_name=failed_function_name, config=config)
-                    examples = json.loads(response)
-                    success, failed_function_name = self.add_example_functions_to_classes(examples, config)
+                        print(f'Failed to add example function to class {failed_function_names}. Retry.')
+                    responses = self._api_communicator.ask_examples_again(class_name=failed_function_names, config=config)
+                    examples = json.loads(responses)
+                    success, failed_function_names = self.add_example_functions_to_classes(file_path, examples, config)
                     
             else:
                 if config["verbose"]:
@@ -235,8 +236,8 @@ The class is initialized with a configuration dictionary that contains settings 
 
     def _get_docstrings(self, source_code: str) -> Dict[str, str]:
         """Retrieves docstrings for the source code using the APICommunicator."""
-        response = self._api_communicator.ask_for_docstrings(source_code, self.config)
-        return DocstringProcessor(self.config).extract_docstrings(response)
+        responses = self._api_communicator.ask_for_docstrings(source_code, self.config)
+        return DocstringProcessor(self.config).extract_docstrings(responses)
 
 
     def wipe_docstrings(self, file_path: Path):
@@ -267,29 +268,69 @@ The class is initialized with a configuration dictionary that contains settings 
         """Lists all files in a directory with a given file extension."""
         return [f for f in directory.iterdir() if f.suffix == extension]  
     
-    def parse_examples_from_response(self, examples: dict):
+    def parse_examples_from_response(self, docstrings: dict):
         parsed_examples = {}
-        for key, example in examples.items():
-            class_or_func_name = key.split("_")[1]
-            if class_or_func_name not in parsed_examples:
-                parsed_examples[class_or_func_name] = []
-            parsed_examples[class_or_func_name].append(example)
+        
+        for class_or_func_name, content in docstrings.items():
+            # Extract the example for the class or function
+            class_example = content.get("example")
+            if class_example:
+                if class_or_func_name not in parsed_examples:
+                    parsed_examples[class_or_func_name] = []
+                parsed_examples[class_or_func_name] = class_example
+
         return parsed_examples
+
     
-    def add_example_functions_to_classes(self, parsed_examples: dict, config):
-        for class_name, examples in parsed_examples.items():
-            for i, example in enumerate(examples):
-                example = self.add_indentation(example, 1)
-                function_name = f"example_{i+1}"
-                new_function = f"def {function_name}(self):\n{example}"
-                new_function = new_function.replace("\\n", "\n")
-                try:
-                    exec(f"{class_name}.{function_name} = {new_function}")  
-                    return True, None  
-                except Exception as e:
+
+
+    def add_example_functions_to_classes(self, file_path, examples, config):
+        success = True
+        failed_class_names = []
+
+        with open(file_path, 'r') as file:
+            content = file.read()
+
+        for class_name, example_code in examples.items():
+            try:
+                tree = ast.parse(content)  # Re-parse the content each time
+                end_line_number = None
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef) and node.name == class_name:
+                        end_line_number = node.end_lineno if hasattr(node, 'end_lineno') else node.body[-1].lineno
+                        break
+
+                if end_line_number is not None:
+                    content_lines = content.splitlines()
+                    # Prepare the function definition for validation
+                    validation_code = f"def example_function_{class_name}(self):\n{self.add_indentation(example_code, 1)}"
+                    if not Utility.is_valid_python(validation_code):
+                        if config["verbose"]:
+                            print(f"Invalid example code for class {class_name}.")
+                        success = False
+                        failed_class_names.append(class_name)
+                        continue
+
+                    # Proper indentation for insertion
+                    function_def_str = f"\n    def example_function_{class_name}(self):\n{self.add_indentation(example_code, 2)}"
+                    content_lines.insert(end_line_number, function_def_str)
+                    content = "\n".join(content_lines)
+                else:
                     if config["verbose"]:
-                        print(f"Failed to add example function to class {class_name}: {e}")
-                    return False, function_name
+                        print(f"Class {class_name} not found.")
+                    success = False
+                    failed_class_names.append(class_name)
+            except Exception as e:
+                if config["verbose"]:
+                    print(f"Failed to append example to class {class_name}: {e}")
+                success = False
+                failed_class_names.append(class_name)
+
+        with open(file_path, 'w') as file:
+            file.write(content)
+
+        return success, failed_class_names
+
 
     def add_indentation(self, source_code: str, indent: int) -> str:
         """Adds indentation to a source code string."""

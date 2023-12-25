@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Dict
 import requests
 import json
+import os
 from openai import OpenAI
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.Utility import Utility
@@ -182,12 +183,24 @@ class APICommunicator:
 
     def ask_for_docstrings(self, source_code, config):
         if config['bot'] == 'file':
-            import os
+            responses = []
             working_directory = os.getcwd()
-            bot_file_path = os.path.join(working_directory, f"test_DocStringGenerator/{config['bot_response_file']}.txt")
-            with open(bot_file_path) as f:
-                responses = [f.read()]  # Wrap in list for consistency
-            is_valid = True
+
+            bot_response_files = config['bot_response_file']
+            if not isinstance(bot_response_files, list):
+                bot_response_files = [bot_response_files]  # Make it a list if it's not
+
+            for bot_file in bot_response_files:
+                # Check if bot_file is an absolute path
+                if not os.path.isabs(bot_file):
+                    # If not, construct the path relative to the working_directory and tests folder
+                    bot_file = os.path.join(working_directory, f"tests/{bot_file}.txt")
+                
+                with open(bot_file, 'r') as f:
+                    response = f.read()
+
+                responses.append(response)
+                context_exceeded, is_valid = self.get_response_validity(responses, config)                
         else:
             responses = self.send_code_in_parts(source_code, config)
             context_exceeded, is_valid = self.get_response_validity(responses, config)
@@ -253,10 +266,11 @@ class APICommunicator:
 
     def get_response_validity(self, responses, config):
         context_exceeded = any('context_length_exceeded' in response for response in responses)
-        is_valid = DocstringProcessor(config).validate_response(responses)
+        for response in responses:
+            is_valid = DocstringProcessor(config).validate_response(response)
 
         if not is_valid and not context_exceeded and config['verbose']:
-            print('Retrying with the full code as the response format was incorrect.')
+            print('The response format was incorrect.')
 
         return context_exceeded, is_valid
     

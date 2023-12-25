@@ -17,6 +17,10 @@ class Test:
         for item in items:
             total += item
         return total
+
+    def example_function_Test(self):
+        result = test()
+        print(result)
         
 test = Test()
 print(test.func1(1, 2))
