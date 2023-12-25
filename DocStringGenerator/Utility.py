@@ -48,7 +48,7 @@ class Utility:
         if brace_count != 0:
             is_valid = False
             error_message = "Unbalanced curly braces in JSON string."
-        if not found_json_string or found_json_string.trim() == "":
+        if not found_json_string or found_json_string.strip() == "":
             is_valid = False
             error_message = "No JSON string found."
 
