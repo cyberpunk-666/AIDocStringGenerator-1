@@ -267,14 +267,19 @@ class APICommunicator:
     def get_response_validity(self, responses, config):
         context_exceeded = any('context_length_exceeded' in response for response in responses)
         for response in responses:
-            is_valid = DocstringProcessor(config).validate_response(response)
+            is_valid = DocstringProcessor(config).validate_response(response, config)
 
         if not is_valid and not context_exceeded and config['verbose']:
             print('The response format was incorrect.')
 
         return context_exceeded, is_valid
     
-    def ask_bard(self, prompt, config):
+    def ask_bard(self, prompt_template, replacements, config):
+        prompt_template = prompt_template.replace('{verbosity_level}', str(config.get('verbosity_level', 2)))
+        prompt = prompt_template
+        for key, val in replacements.items():
+            prompt = prompt.replace(f'{{{key}}}', val)
+
         bard = Bard(token_from_browser=True)
         response = bard.get_answer(prompt)
         return response['content']

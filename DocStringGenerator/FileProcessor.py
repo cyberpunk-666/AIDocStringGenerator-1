@@ -193,7 +193,7 @@ The class is initialized with a configuration dictionary that contains settings 
                 docstrings, success = docstrings_tuple
                 if config["keep_responses"]:
                     print(f'Extracted docstrings: {docstrings}')
-                    self.save_response(file_path, docstrings, examples)
+                    self.save_response(file_path, docstrings)
 
                 if not success:                
                     if config["verbose"]:
@@ -224,22 +224,6 @@ The class is initialized with a configuration dictionary that contains settings 
         self.log_processed_file(file_path)
         return True   
 
-
-    def _insert_docstrings(self, filepath: Path):
-        """Inserts generated docstrings into a file."""
-        try:
-            source_code = filepath.read_text()
-            docstrings = self._get_docstrings(source_code)
-            self._docstring_inserter.insert(filepath, docstrings)
-        except Exception as e:
-            print(f"Failed to process {filepath}: {e}")
-
-    def _get_docstrings(self, source_code: str) -> Dict[str, str]:
-        """Retrieves docstrings for the source code using the APICommunicator."""
-        responses = self._api_communicator.ask_for_docstrings(source_code, self.config)
-        return DocstringProcessor(self.config).extract_docstrings(responses)
-
-
     def wipe_docstrings(self, file_path: Path):
         """Removes all docstrings from a Python source file."""
         source = file_path.read_text()
@@ -255,14 +239,13 @@ The class is initialized with a configuration dictionary that contains settings 
 
         file_path.write_text(new_source)
 
-    def save_response(self, file_path: Path,  docstrings, example):
+    def save_response(self, file_path: Path,  docstrings):
         """
         Saves the response for a processed file in a separate JSON file.
         """
         response_file_path = file_path.with_suffix('.response.json')
         with open(response_file_path, 'w') as f:
             json.dump(docstrings, f, indent=4)
-            json.dump(example, f, indent=4)
 
     def list_files(self, directory: Path, extension: str) -> List[Path]:
         """Lists all files in a directory with a given file extension."""
