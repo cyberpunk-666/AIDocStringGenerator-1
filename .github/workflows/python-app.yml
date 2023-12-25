@@ -38,4 +38,5 @@ jobs:
       env:
         claude_api_key: ${{ secrets.claude_api_key }}
       run: |
+        python -m unittest discover
         pytest
