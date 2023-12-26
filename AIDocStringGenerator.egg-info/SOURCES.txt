@@ -5,7 +5,6 @@ AIDocStringGenerator.egg-info/PKG-INFO
 AIDocStringGenerator.egg-info/SOURCES.txt
 AIDocStringGenerator.egg-info/dependency_links.txt
 AIDocStringGenerator.egg-info/entry_points.txt
-AIDocStringGenerator.egg-info/requires.txt
 AIDocStringGenerator.egg-info/top_level.txt
 DocStringGenerator/APICommunicator.py
 DocStringGenerator/ConfigManager.py

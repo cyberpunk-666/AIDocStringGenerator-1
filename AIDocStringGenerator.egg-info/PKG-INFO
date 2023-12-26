@@ -7,51 +7,6 @@ Author: Francois Girard
 Author-email: fantasiiio@hotmail.com
 Description-Content-Type: text/markdown
 License-File: LICENCE
-Requires-Dist: annotated-types==0.6.0
-Requires-Dist: anyio==4.2.0
-Requires-Dist: bardapi==0.1.38
-Requires-Dist: beautifulsoup4==4.12.2
-Requires-Dist: browser-cookie3==0.19.1
-Requires-Dist: cachetools==5.3.2
-Requires-Dist: certifi==2023.11.17
-Requires-Dist: charset-normalizer==3.3.2
-Requires-Dist: colorama==0.4.6
-Requires-Dist: deep-translator==1.11.4
-Requires-Dist: distro==1.8.0
-Requires-Dist: google-api-core==2.15.0
-Requires-Dist: google-auth==2.25.2
-Requires-Dist: google-cloud-core==2.4.1
-Requires-Dist: google-cloud-translate==3.13.0
-Requires-Dist: googleapis-common-protos==1.62.0
-Requires-Dist: grpcio==1.60.0
-Requires-Dist: grpcio-status==1.60.0
-Requires-Dist: h11==0.14.0
-Requires-Dist: h2==4.1.0
-Requires-Dist: hpack==4.0.0
-Requires-Dist: httpcore==1.0.2
-Requires-Dist: httpx==0.26.0
-Requires-Dist: hyperframe==6.0.1
-Requires-Dist: idna==3.6
-Requires-Dist: langdetect==1.0.9
-Requires-Dist: lz4==4.3.2
-Requires-Dist: openai==1.6.1
-Requires-Dist: proto-plus==1.23.0
-Requires-Dist: protobuf==4.25.1
-Requires-Dist: pyasn1==0.5.1
-Requires-Dist: pyasn1-modules==0.3.0
-Requires-Dist: pycryptodomex==3.19.0
-Requires-Dist: pydantic==2.5.3
-Requires-Dist: pydantic_core==2.14.6
-Requires-Dist: python-dotenv==1.0.0
-Requires-Dist: requests==2.31.0
-Requires-Dist: rsa==4.9
-Requires-Dist: setuptools==69.0.2
-Requires-Dist: six==1.16.0
-Requires-Dist: sniffio==1.3.0
-Requires-Dist: soupsieve==2.5
-Requires-Dist: tqdm==4.66.1
-Requires-Dist: typing_extensions==4.9.0
-Requires-Dist: urllib3==2.1.0
 
 ### AIDocStringGenerator: Overview and Purpose
 
@@ -111,18 +66,20 @@ The Docstring Generator is particularly useful for:
     
     -   Locate and rename `config_template.json` to `config.json` in the installed package directory.
 
-3.  **Configuration Parameters**:
-    
-    -   `path`: The file or directory path to process.
-    -   `wipe_docstrings`: If `true`, existing docstrings in files will be wiped before generating new ones.
-    -   `verbose`: Enable verbose output if set to `true`.
-    -   `bot`: Specify the AI bot to use (**gpt3.5, gpt4, gpt4-120k, claude, file**).
-    -   `bot_response_file`: parameter allows you to specify the name of a file or an array of files containing pre-defined responses. When this mode is active, instead of receiving live responses from an AI bot, the tool reads and uses responses from the specified file(s). This feature is particularly useful for emulating multi-part responses, where each file in the array represents a different part of a sequential response. This option can be beneficial in scenarios where direct interaction with an AI bot is not feasible, or when testing and debugging with predetermined responses."
-    -   `bard_api_key`, `openai_api_key`, `claude_api_key`: API keys for the respective AI services.
-    -   `include_subfolders`: Set to `true` to include subfolders in processing.
-    -   `verbosity_level`: Specifies verbosity level, e.g., "5 for class and 2 for functions".
-    -   `keep_responses`: If `true`, keeps the bot responses.
-    -   `ignore`: An array of strings containing file or directory names to exclude from processing. The tool skips any file or directory whose name matches an entry in this array. This is useful for omitting irrelevant or sensitive files and directories from the process. The matching is based on the name only, not the full path.
+### 3. Configuration Parameters
+
+-   **path:**  The file or directory path to process.
+-   **wipe_docstrings:**  If  `true`, existing docstrings in files will be wiped before generating new ones.
+-   **verbose:**  Enable verbose output if set to  `true`.
+-   **bot:**  Specify the AI bot to use (options include  `gpt3.5`,  `gpt4`,  `gpt4-120k`,  `claude`,  `file`).
+-   **bot_response_file:**  This parameter allows you to specify the base name of a single file that contains pre-defined responses, located in the "responses" folder. The tool reads and uses responses from this file and its sequentially numbered parts (if any), such as  `file_name.response.json`,  `file_name.response2.json`,  `file_name.response3.json`, etc. This setup is ideal for testing and debugging with predetermined, multi-part responses when direct interaction with an AI bot is not feasible.
+-   **bard_api_key`,`openai_api_key`,`claude_api_key:**  API keys for the respective AI services.
+-   **include_subfolders:**  Set to  `true`  to include subfolders in processing.
+-   **class_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for classes. Valid values are 0-5, with higher values indicating more detailed docstrings.
+-   **function_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for functions. Valid values are 0-5, with higher values indicating more detailed docstrings.
+-   **example_verbosity_level:**  Controls the level of detail in the generated code examples. Valid values are 0-5, with higher values indicating more comprehensive and complex examples.
+-   **keep_responses:**  If set to  `true`, the tool saves the bot responses in the "responses" folder.
+-   **ignore:**  An array of strings containing file or directory names to exclude from processing.
 
 
 4.  **Command Line Overrides**:
@@ -130,10 +87,30 @@ The Docstring Generator is particularly useful for:
     -   Command line arguments allow you to override settings in `config.json`.
     -   Example command:
         
-        bashCopy code
-        
         `AIDocStringGenerator --path "/path/to/source" --verbose --wipe_docstrings --bot "claude" --include_subfolders --verbosity_level "5"` 
         
+	**Verbosity Levels:**
+
+	To control the level of detail in the generated docstrings and examples, you can use the following verbosity levels:
+
+	**Function and Class Docstrings Verbosity Levels:**
+
+	-   0: No docstrings for functions or classes.
+	-   1: Very brief, one-line comments for major functions and classes only.
+	-   2: Concise but informative docstrings, covering basic purposes and functionality.
+	-   3: Detailed docstrings including parameters, return types, and a description of the behavior.
+	-   4: Very detailed explanations, including usage examples in the docstrings.
+	-   5: Extremely detailed docstrings, providing in-depth explanations, usage examples, and covering edge cases.
+
+	**Example Verbosity Levels:**
+
+	-   0: No examples.
+	-   1: Simple examples demonstrating basic usage.
+	-   2: More comprehensive examples covering various use cases.
+	-   3: Detailed examples with step-by-step explanations.
+	-   4: Extensive examples including edge cases and error handling.
+	-   5: Interactive examples or code playgrounds for experimentation.
+
 
 ### Continuous Integration (CI) Setup
 
@@ -171,42 +148,118 @@ steps:
     -   Add API keys as secrets in the repository's Settings under 'Secrets'.
     -   Ensure the names of the secrets in GitHub match those used in the command.
 
-#### Running the Generator
 
-### Running the Generator
 
-1.  **Process Files or Directories**:
+# Running the Generator**
+
+## Process Files or Directories
+
+The AI Docstring Generator can process either a single Python file or an entire directory containing multiple files. You have two options for providing processing instructions:
+
+### Using Command Line Arguments
+
+To run the tool with command-line arguments, use the following format:
+
+Bash
+
+```
+AIDocStringGenerator --path "/path/to/python/files" --verbose
+
+```
+
+Utilisez le code avec prÃ©caution.  [En savoir plus](https://bard.google.com/faq#coding)
+
+content_copy
+
+This command processes Python files located at the specified path, with verbose output enabled.
+
+### Using a Configuration File
+
+If you start the program without providing command-line arguments, it will automatically look for a configuration file named `config.json` in the current working directory. This file allows you to specify the processing parameters in a structured format.
+
+## Example Configuration
+
+Here's an example `config.json` file:
+
+JSON
+
+```
+{
+    "path": "tests/classTest.py",
+    "bot": "file",
+    "bot_response_file": "classTest",
+    "include_subfolders": false,
+    "wipe_docstrings": true,
+    "verbose": true,
+    "bard_api_key": "",
+    "openai_api_key": "",
+    "claude_api_key": "",
+    "keep_responses": false,
+    "ignore": [".venv"],
+    "class_docstrings_verbosity_level": 5,
+    "function_docstrings_verbosity_level": 2,
+    "example_verbosity_level": 3
+}
+
+```
+
+Utilisez le code avec prÃ©caution.  [En savoir plus](https://bard.google.com/faq#coding)
+
+content_copy
+
+## Explanation of the Example Configuration
+
+-   **Target File:**  The tool will process the file  `tests/classTest.py`.
+-   **AI Bot:**  It will use pre-defined responses from files in the "responses" folder, starting with  `classTest.response.json`.
+-   **Processing Scope:**  It will only process the specified file, not subfolders.
+-   **Existing Docstrings:**  It will wipe any existing docstrings before generating new ones.
+-   **Output:**  It will provide verbose output during processing.
+-   **API Keys:**  It will not use any external AI services, as the API keys are empty.
+-   **Saving Responses:**  It will not save the bot responses.
+-   **Excluded Files:**  It will ignore any files or directories named ".venv".
+-   **Verbosity Levels:**
+    -   Class docstrings will be very detailed (level 5).
+    -   Function docstrings will be concise but informative (level 2).
+    -   Code examples will be comprehensive, covering various use cases (level 3).
+
+## Folder Structure
+
+-   **responses:**  Contains pre-defined responses for the file  `classTest.py`.
+    -   `classTest.response.json`
+    -   `classTest.response2.json`
+-   **tests:**  Contains the Python file to be processed.
+    -   `classTest.py`
     
-    -   The tool is capable of processing either a single Python file or an entire directory containing multiple Python files.
-    -   To run the tool, use the command line interface. Hereâ€™s a basic example of how to execute the tool:
-    
-        `AIDocStringGenerator --path "/path/to/python/files" --verbose` 
-        
-    -   This command processes Python files located at `"/path/to/python/files"`, with verbose output enabled.
-    - 
-2.  **Integration into Larger Projects**:
-    
-    -   If youâ€™re integrating the tool into a larger Python project, you can call it within your Python scripts or setup automated scripts to run it as part of your development workflow.
 
-5.  **Continuous Integration**:
-    
-    -   For continuous integration setups, consider using command line parameters with environment variables or CI secrets, especially for API keys. This ensures that the tool can be dynamically configured based on the CI environment while keeping sensitive information secure.
+**# Integration and Advanced Usage**
 
-#### Advanced Usage
+## Integration into Larger Projects
 
--   **Custom Templates**: If the tool allows, customize the templates used for generating docstrings to suit your projectâ€™s style or requirements.
-    
--   **Continuous Integration**: Include the Docstring Generator in your CI pipeline to ensure that all new code comes with proper documentation.
-    
+-   **Script Integration:**  If you're integrating the tool into a larger Python project, you can seamlessly call it within your Python scripts or set up automated scripts to run it as part of your development workflow. This ensures consistent documentation generation within your project's context.
 
-### Best Practices
+## Continuous Integration
 
--   **Regularly Update**: Run the generator regularly to keep documentation up-to-date with the latest code changes.
--   **Manual Review**: Always review and possibly refine automatically generated docstrings to ensure accuracy and relevance.
--   **Secure API Keys**: Keep your API keys secure and do not expose them in shared or public environments.
--   **Adhere to Python Standards**: Follow PEP 257 docstring conventions to maintain consistency and readability.
+-   **Dynamic Configuration:**  For continuous integration setups, consider using command-line parameters with environment variables or CI secrets. This allows you to dynamically configure the tool based on the CI environment while keeping sensitive information like API keys secure.
+-   **CI Pipeline Inclusion:**  Include the Docstring Generator in your CI pipeline to enforce documentation generation for all new code. This helps maintain code quality and consistency from the start.
 
-### Conclusion
+## Advanced Usage
 
-The Docstring Generator represents a significant leap in automating a crucial aspect of software development - documentation. It is particularly valuable for large-scale projects where manual documentation can be time-consuming and prone to inconsistencies. By leveraging AI and customizable templates, it offers a robust solution to maintain high-quality, consistent, and up-to-date documentation for Python codebases
- 
+-   **Custom Templates:** Customize the templates used for generating docstrings to align with your project's specific style or requirements. This ensures that the generated documentation adheres to your project's conventions and enhances readability.
+
+## Best Practices
+
+-   **Regular Updates:**  Run the generator frequently to keep documentation in sync with the latest code changes. This maintains accurate and up-to-date documentation throughout the development process.
+-   **Manual Review:**  Always review and refine automatically generated docstrings to ensure their relevance and accuracy. While AI-generated docstrings can be a valuable starting point, human oversight is crucial to ensure quality and address any potential shortcomings.
+-   **Secure API Keys:**  Protect your API keys by storing them securely and avoiding exposure in shared or public environments. This prevents unauthorized access and potential misuse of your AI services.
+-   **PEP 257 Adherence:**  Follow the Python community's PEP 257 docstring conventions to maintain consistency and readability across your codebase. This promotes better understanding and collaboration among developers.
+
+## Conclusion
+
+The AI Docstring Generator represents a significant advancement in automating the critical task of software documentation. Its key benefits include:
+
+-   **Automation:**  Streamlines the documentation process, saving time and effort for developers.
+-   **AI-Powered:**  Leverages AI capabilities to generate comprehensive and informative docstrings, often surpassing the quality of manual documentation.
+-   **Customization:**  Offers flexibility through configuration options and potentially customizable templates, allowing for tailored documentation that aligns with project-specific needs.
+-   **CI Integration:**  Facilitates seamless integration into continuous integration workflows, ensuring consistent documentation for all code changes.
+
+By effectively utilizing this tool, you can maintain high-quality, consistent, and up-to-date documentation for your Python codebases, promoting better code understanding, maintainability, and collaboration.
