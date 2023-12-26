@@ -138,31 +138,42 @@ The class is initialized with a configuration dictionary that contains settings 
             return False
 
     def process_folder_or_file(self, config):
-        path = Path(config['path'])
-        include_subfolders = config.get('include_subfolders', False)
-        if os.path.isdir(path):
-            for root, _, files in os.walk(path):
-                if not include_subfolders and root != path:
-                    continue
-                for file in files:
-                    full_file_path = Path(root, file)
-                    if file.endswith('.py'):
-                        if config['wipe_docstrings']:
-                            self.wipe_docstrings(full_file_path)
-                      
-                        success = self.process_file(full_file_path.absolute(), config)
-                        if not success:
-                            print(f'Failed to process {str(full_file_path.absolute())}')
-                                
-        elif os.path.isfile(path) and str(path).endswith('.py'):
-            if config['wipe_docstrings']:
-                self.wipe_docstrings(path)
+            path = Path(config['path'])
+            include_subfolders = config.get('include_subfolders', False)
+            ignore_list = set(config.get('ignore', []))  # Convert ignore list to a set for faster lookup
 
-            success = self.process_file(path.absolute(), config)
-            if not success:
-                print(f'Failed to process {path}')
-        else:
-            print('Invalid path or file type. Please provide a Python file or directory.')
+            if os.path.isdir(path):
+                for root, dirs, files in os.walk(path):
+                    if not include_subfolders and root != str(path):
+                        continue
+
+                    # Filter out ignored directories
+                    dirs[:] = [d for d in dirs if d not in ignore_list]
+
+                    for file in files:
+                        # Check if the file is in the ignore list
+                        if file in ignore_list:
+                            continue
+
+                        full_file_path = Path(root, file)
+                        if file.endswith('.py'):
+                            if config.get('wipe_docstrings', False):
+                                self.wipe_docstrings(full_file_path)
+                            
+                            success = self.process_file(full_file_path.absolute(), config)
+                            if not success:
+                                print(f'Failed to process {str(full_file_path.absolute())}')
+                                    
+            elif os.path.isfile(path) and str(path).endswith('.py'):
+                if config.get('wipe_docstrings', False):
+                    self.wipe_docstrings(path)
+
+                if path.name not in ignore_list:
+                    success = self.process_file(path.absolute(), config)
+                    if not success:
+                        print(f'Failed to process {path}')
+            else:
+                print('Invalid path or file type. Please provide a Python file or directory.')
 
     def process_file(self, file_path, config):
         """Processes a single Python file to generate and insert docstrings."""
@@ -181,7 +192,7 @@ The class is initialized with a configuration dictionary that contains settings 
             source_code = file.read()
 
         file_path_str = str(file_path)
-        task = ResultThread(target=APICommunicator(config).ask_for_docstrings, args=(source_code, config))
+        task = ResultThread(target=APICommunicator(config).get_response, args=(source_code, config))
         task.start()
         if not config["verbose"]:
             spinner = Spinner()
@@ -194,9 +205,11 @@ The class is initialized with a configuration dictionary that contains settings 
             docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
             docstrings, success = docstrings_tuple
             if success:
+                self.save_responses(file_path, docstrings)
                 if config["keep_responses"]:
                     print(f'Extracted docstrings: {docstrings}')
-                    self.save_response(file_path, docstrings)
+                    if config["bot"] != "file":
+                        self.save_response(file_path, docstrings)
 
                 DocstringProcessor(config).insert_docstrings(file_path, docstrings)
                 if config["verbose"]:
@@ -204,6 +217,10 @@ The class is initialized with a configuration dictionary that contains settings 
 
                 parsed_examples = self.parse_examples_from_response(docstrings)
                 success, failed_function_names = self.add_example_functions_to_classes(file_path, parsed_examples, config)
+                if "path" in config:
+                    path = config["path"]
+                    if os.path.isdir(path):
+                        self.log_processed_file(file_path)
                 if not success and config["verbose"]:
                     print(f'Failed to add example functions to classes: {failed_function_names}')
             else:
@@ -215,8 +232,19 @@ The class is initialized with a configuration dictionary that contains settings 
                 print(f'No response received for file: {file_path_str}')
             return False
         
-        self.log_processed_file(file_path)
         return True
+
+    def save_response(self, file_path: Path,  docstrings):
+        """
+        Saves the response for a processed file in a separate JSON file.
+        """
+        response_file_path = file_path.with_suffix('.response.json')
+        folder_path = Path("./responses")
+        folder_path.mkdir(parents=True, exist_ok=True)
+        stem = Path(file_path).stem
+        response_file_path = Path(folder_path, stem + '.response.json')
+        with open(response_file_path, 'w') as f:
+            json.dump(docstrings, f, indent=4)
 
 
     def wipe_docstrings(self, file_path: Path):
@@ -233,14 +261,6 @@ The class is initialized with a configuration dictionary that contains settings 
         new_source = ast.unparse(tree)
 
         file_path.write_text(new_source)
-
-    def save_response(self, file_path: Path,  docstrings):
-        """
-        Saves the response for a processed file in a separate JSON file.
-        """
-        response_file_path = file_path.with_suffix('.response.json')
-        with open(response_file_path, 'w') as f:
-            json.dump(docstrings, f, indent=4)
 
     def list_files(self, directory: Path, extension: str) -> List[Path]:
         """Lists all files in a directory with a given file extension."""
@@ -281,8 +301,9 @@ The class is initialized with a configuration dictionary that contains settings 
                 if end_line_number is not None:
                     content_lines = content.splitlines()
                     # Prepare the function definition for validation
+                    example_code = example_code.replace("\\n", "\n")
                     validation_code = f"def example_function_{class_name}(self):\n{self.add_indentation(example_code, 1)}"
-                    if not Utility.is_valid_python(validation_code):
+                    if not Utility.is_valid_python(validation_code, config):
                         if config["verbose"]:
                             print(f"Invalid example code for class {class_name}.")
                         success = False

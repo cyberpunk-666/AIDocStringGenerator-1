@@ -39,7 +39,6 @@ class APICommunicator:
             print(long_string[i:i+n], "")            
 
     def ask_claude(self, prompt_template, replacements, config):
-        prompt_template = prompt_template.replace('{verbosity_level}', str(config.get('verbosity_level', 2)))
         prompt = prompt_template
         for key, val in replacements.items():
             prompt = prompt.replace(f'{{{key}}}', val)
@@ -66,8 +65,6 @@ class APICommunicator:
                     current_time = time.time()
 
                     if not first_block_received:
-                        if config['verbose']:
-                            print("Received first data block.")
                         first_block_received = True
                         last_block_time = current_time
                         continue
@@ -106,13 +103,6 @@ class APICommunicator:
                 print(f'Error during API call: {str(e)}')
             return f'Error during Claude API call: {str(e)}'
               
-
-    def ask_claude_for_docstrings(self, source_code, config):
-        import sys
-        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
-        replacements = {'source_code': source_code}
-        return self.ask_claude(prompt_template, replacements, config)
-
     def _parse_claude_response(self, response: requests.Response) -> APIResponse:
         content = ''
         for line in response.iter_lines():
@@ -131,7 +121,6 @@ class APICommunicator:
 
         
     def ask_openai(self, prompt_template, replacements, config, system_prompt='You are a helpful assistant.', verbose=False):
-        prompt_template = prompt_template.replace('{verbosity_level}', str(config.get('verbosity_level', 2)))
         prompt = prompt_template
         for key, val in replacements.items():
             prompt = prompt.replace(f'{{{key}}}', val)
@@ -173,33 +162,50 @@ class APICommunicator:
         except APIError as e:  # Generic catch for other API errors
             return f'API error occurred: {e}'        
 
-    def ask_openai_for_docstrings(self, source_code, config):
-        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
-        replacements = {'source_code': source_code}
-        return self.ask_openai(prompt_template, replacements, config)
-
-    def ask_bard_for_docstrings(self, source_code, config):
-        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
-        replacements = {'source_code': source_code}
-        return self.ask_bard(prompt_template, replacements, config)
 
     def ask_for_docstrings(self, source_code, config):
+        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
+        replacements = {'source_code': source_code, 
+                        'verbosity_level': str(config.get('verbosity_level', 2)),
+                        'max_line_length': str(config.get('max_line_length', 79)),
+                        "class_docstrings_verbosity_level": str(config.get("class_docstrings_verbosity_level",5)),
+                        "function_docstrings_verbosity_level":  str(config.get("function_docstrings_verbosity_level",2)),
+                        "example_verbosity_level": str(config.get("example_verbosity_level",3))
+                        }
+                
+        if config['bot'] == 'claude':
+            return self.ask_claude(prompt_template, replacements, config)
+        elif config['bot'] == 'bard':
+            return self.ask_bard(prompt_template, replacements, config)
+        else:
+            return self.ask_openai(prompt_template, replacements, config)
+
+
+    def get_response(self, source_code, config):
         responses = []
+
         if config['bot'] == 'file':
             # Handling file-based responses
             working_directory = os.getcwd()
-            bot_response_files = config['bot_response_file']
-            if not isinstance(bot_response_files, list):
-                bot_response_files = [bot_response_files]  # Ensure it's a list
+            base_bot_file = config['bot_response_file']
 
-            for bot_file in bot_response_files:
-                # Constructing file paths
-                if not os.path.isabs(bot_file):
-                    bot_file = os.path.join(working_directory, f"tests/{bot_file}.txt")
-                
+            # Check if it's a path or just a filename
+            if not os.path.isabs(base_bot_file):
+                base_bot_file = os.path.join(working_directory, f"responses/{base_bot_file}")
+
+            # Remove file extension if present
+            base_bot_file, _ = os.path.splitext(base_bot_file)
+
+            counter = 1
+            bot_file = f"{base_bot_file}.response.json"
+            while os.path.exists(bot_file):
                 with open(bot_file, 'r') as f:
-                    response = f.read()
-                responses.append(response)
+                    response_text = f.read()  # Read the raw string content
+                    responses.append(response_text)
+
+                # Prepare the next file name
+                counter += 1
+                bot_file = f"{base_bot_file}.response{counter}.json"
         else:
             # Handling bot-based responses
             responses = self.send_code_in_parts(source_code, config)
@@ -244,12 +250,7 @@ class APICommunicator:
     def send_code_in_parts(self, source_code, config):
 
         def make_request(code):
-            if config['bot'] == 'claude':
-                return self.ask_claude_for_docstrings(code, config)
-            elif config['bot'] == 'bard':
-                return self.ask_openai_for_docstrings(code, config)
-            else:
-                return self.ask_bard_for_docstrings(code, config)
+            return self.ask_for_docstrings(code, config)
 
         def attempt_send(code, iteration=0):
             from DocStringGenerator.FileProcessor import FileProcessor

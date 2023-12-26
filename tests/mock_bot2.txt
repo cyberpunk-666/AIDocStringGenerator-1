@@ -15,7 +15,7 @@
             "_process_claude_line": "Processes a line from the Claude API response. If the line contains a completion, it is extracted and returned.",
             "ask_openai": "Makes a request to the OpenAI API with a given prompt and replacements. It handles the response and returns the completion from the API.",
             "ask_openai_for_docstrings": "Generates a prompt for generating docstrings and makes a request to the OpenAI API. It returns the response from the API.",
-            "ask_for_docstrings": "Determines which API to use based on the configuration and makes a request for docstrings. It handles the response and returns the docstrings and a boolean indicating whether the response is valid.",
+            "get_response": "Determines which API to use based on the configuration and makes a request for docstrings. It handles the response and returns the docstrings and a boolean indicating whether the response is valid.",
             "send_code_in_parts": "Sends the source code in parts to the API if the context length is exceeded. It handles the responses and returns the combined completions.",
             "get_response_validity": "Checks the validity of the API response. It checks for context length exceeded, presence of docstrings, and correct response format."
         },

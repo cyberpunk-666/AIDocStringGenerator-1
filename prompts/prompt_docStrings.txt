@@ -1,18 +1,35 @@
-I am requesting docstrings for specific Python functions and classes that currently lack documentation and a functional example for each classes in the following Python code, with an adjustable level of detail based on a verbosity scale from 0 to 5.
-The meanings of each verbosity level are as follows:
+I am requesting docstrings for specific Python functions and classes that currently lack documentation and a functional example for each class in the following Python code.
 
-- 0: No comments or docstrings.
-- 1: Very brief, one-line comments for major functions and classes only.
-- 2: Concise but informative docstrings for classes and functions, covering basic purposes and functionality.
-- 3: Detailed docstrings including parameters, return types, and a description of the function or class behavior.
-- 4: Very detailed explanations, including usage examples in the docstrings.
-- 5: Extremely detailed docstrings, providing in-depth explanations, usage examples, and covering edge cases.
+Crucially, please ensure that ALL lines in the generated JSON response, including docstrings, code examples, and any other text, adhere to a maximum length of {max_line_length} characters.
 
-The current verbosity level for this task is set to {verbosity_level} and should be used to determine the level of detail in your explanations. Additionally, please provide a code example demonstrating the functionality of the main class or a key function in the code.
+The level of detail in the docstrings should be adjustable based on a verbosity scale from 0 to 5, as follows:
 
-Please adhere to the following JSON format for the response, ensuring the usage of simple double quotes for strings:
+Function and Class docstrings verbosity levels:
+0: No docstrings for functions.
+1: Very brief, one-line comments for major functions only.
+2: Concise but informative docstrings for functions, covering basic purposes and functionality.
+3: Detailed docstrings including parameters, return types, and a description of the function behavior.
+4: Very detailed explanations, including usage examples in the docstrings.
+5: Extremely detailed docstrings, providing in-depth explanations, usage examples, and covering edge cases.
 
-Also, try to make lines not more than 160 characters
+Example verbosity levels:
+0: No examples.
+1: Simple examples demonstrating basic usage.
+2: More comprehensive examples covering various use cases.
+3: Detailed examples with step-by-step explanations.
+4: Extensive examples including edge cases and error handling.
+5: Interactive examples or code playgrounds for experimentation.
+
+The current verbosity levels are set to:
+
+Class docstrings: {class_docstrings_verbosity_level}
+Function docstrings: {function_docstrings_verbosity_level}
+Example: {example_verbosity_level}
+Please use these levels to determine the appropriate level of detail in each section of the response.
+
+Additionally, please provide a code example demonstrating the functionality of the main class or a key function in the code.
+
+Please adhere to the following JSON format for the response, using simple double quotes for strings:
 
 {
     "docstrings": {
@@ -40,9 +57,13 @@ Also, try to make lines not more than 160 characters
 }
 
 
-Here is the Python code for which I need the docstrings and functional example, adhering to the verbosity level as per the configuration setting:
+Remember to strictly enforce the {max_line_length}-character limit on all lines within the generated JSON response.
 
+Here is the Python code for which I need the docstrings and functional example:
+
+python
 {source_code}
 
 Note: Only generate docstrings for functions and classes that currently lack them.
 Ensure the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting.
+

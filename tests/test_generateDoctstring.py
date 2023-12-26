@@ -20,7 +20,7 @@ class TestDocStringGenerator(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {
-            "path": "./tests/classTest.py",
+            "path": "./tests/classTest_orig.py",
             "wipe_docstrings": False,
             "verbose": False,
             "bot": "file",
@@ -78,7 +78,7 @@ class TestDocStringGenerator(unittest.TestCase):
         source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
         claude_api_key = os.environ.get('claude_api_key')
         config = {"verbose":False, "claude_api_key": claude_api_key,"bot":"claude", "model": "claude-2.1"}
-        response = APICommunicator(self.config).ask_claude_for_docstrings(source_code, config)
+        response = APICommunicator(self.config).ask_for_docstrings(source_code, config)
         docstrings, valid = DocstringProcessor(config).extract_docstrings([response], config)
         self.assertTrue(valid)        
         
@@ -111,7 +111,7 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_wipe_docstrings(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir, "classTest.py")
+            file_path = Path(tmpdir, "classTest_orig.py")
             file_path.write_text("def function(self):\n    \"\"\"\n    This is a function\n    \"\"\"\n    pass\n\nclass MyClass:\n    \"\"\"\n    This is a class\n    \"\"\"    \n    pass")
             FileProcessor(self.config).wipe_docstrings(Path(file_path))
             with open(str(file_path), "r") as file:

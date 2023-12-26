@@ -33,7 +33,7 @@ class TestAPICommunicator(unittest.TestCase):
         ])
         mock_post.return_value = mock_response
 
-        response = self.communicator.ask_claude_for_docstrings('test code', self.config)
+        response = self.communicator.ask_for_docstrings('test code', self.config)
         self.assertIn('mocked completion', response) 
 
     @patch('requests.post')
@@ -41,7 +41,7 @@ class TestAPICommunicator(unittest.TestCase):
         # Simulate an exception during the request
         mock_post.side_effect = Exception("Connection error")
 
-        response = self.communicator.ask_claude_for_docstrings('test code', self.config)
+        response = self.communicator.ask_for_docstrings('test code', self.config)
         self.assertIn('Error during Claude API call', response)
 
     @patch('requests.post')
@@ -55,7 +55,7 @@ class TestAPICommunicator(unittest.TestCase):
         mock_response.iter_lines.return_value = valid_response
         mock_post.return_value = mock_response
 
-        response = self.communicator.ask_claude_for_docstrings('test code', self.config)
+        response = self.communicator.ask_for_docstrings('test code', self.config)
         self.assertIn('test docstring', response)
 
 
@@ -82,9 +82,9 @@ class TestFileProcessor(unittest.TestCase):
         self.file_processor = FileProcessor(self.config)
 
     def test_process_file(self):
-        self.config = {"keep_responses": False, "verbose": True, "bot": "file", "bot_response_file": ["classTest.response","classTest.response2"]}
+        self.config = {"keep_responses": False, "verbose": True, "bot": "file", "bot_response_file": "classTest"}
 
-        classTest_file_path = Path('./tests/classTest.py')
+        classTest_file_path = Path('./tests/classTest_orig.py')
         temp_dir = tempfile.mkdtemp()  # Create a temporary directory
         temp_file_path = Path(temp_dir, 'classTest_temp.py')
 
@@ -110,9 +110,20 @@ class TestFileProcessor(unittest.TestCase):
         # Assert that the processed content matches the expected content
         self.assertEqual(expected_docstrings, processed_content)
 
-        # Clean up: remove the temporary file and directory
+        # Remove the temporary file first
         os.remove(str(temp_file_path))
-        os.rmdir(temp_dir)
+
+        # Check if the directory is empty, and remove if possible
+        if not os.listdir(temp_dir):
+            os.rmdir(temp_dir)  # Directory is empty, safe to remove
+        else:
+            # Directory is not empty, proceed with recursive deletion
+            try:
+                shutil.rmtree(temp_dir)  # Recursively delete all contents
+                print("Temporary directory and its contents have been removed.")
+            except OSError as e:
+                print("Error removing temporary directory:", e)
+                # Handle potential errors, such as permission issues
 
 
     @patch('DocStringGenerator.FileProcessor.FileProcessor.process_file')
@@ -122,7 +133,7 @@ class TestFileProcessor(unittest.TestCase):
 
         file_processor = FileProcessor(self.config)
 
-        file_processor.process_file("tests/classTest.py", self.config)
+        file_processor.process_file("tests/classTest_orig.py", self.config)
 
         # Assuming the directory contains two Python files
         self.assertEqual(mock_process_file.call_count, 1)
@@ -189,7 +200,7 @@ class TestFileProcessor(unittest.TestCase):
         # New file paths
         with tempfile.TemporaryDirectory() as tmpdir:  
             new_test_script_file_path = Path(tmpdir, "new_test_script.py")  
-            new_docstrings_response_file_path = Path(tmpdir, "new_docstrings_response.json")  
+            new_docstrings_response_file_path = Path(tmpdir, "new_docstrings.response.json")  
 
             # Writing the new contents to the files
             with open(new_test_script_file_path, 'w') as file:
@@ -197,7 +208,10 @@ class TestFileProcessor(unittest.TestCase):
 
             with open(new_docstrings_response_file_path, 'w') as file:
                 file.write(new_docstrings_response_content.strip())
-            self.config["bot_response_file"] = str(new_docstrings_response_file_path.absolute())
+            stem = Path(new_docstrings_response_file_path).stem
+
+            directory_path = new_docstrings_response_file_path.parent
+            self.config["bot_response_file"] = str(Path(directory_path, stem).absolute())
 
             success = FileProcessor(self.config).process_file(new_test_script_file_path, self.config)
             self.assertTrue(success)

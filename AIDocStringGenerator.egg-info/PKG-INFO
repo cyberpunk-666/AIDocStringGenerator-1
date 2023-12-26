@@ -6,6 +6,7 @@ Home-page: https://github.com/fantasiiio/AIDocStringGenerator
 Author: Francois Girard
 Author-email: fantasiiio@hotmail.com
 Description-Content-Type: text/markdown
+License-File: LICENCE
 Requires-Dist: annotated-types==0.6.0
 Requires-Dist: anyio==4.2.0
 Requires-Dist: bardapi==0.1.38
@@ -54,7 +55,7 @@ Requires-Dist: urllib3==2.1.0
 
 ### AIDocStringGenerator: Overview and Purpose
 
-**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Claude and OpenAI GPT4-Turbo, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
+**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Claude and OpenAI GPT-3.5, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
 
 **Key Features**:
 
@@ -97,38 +98,103 @@ The Docstring Generator is particularly useful for:
 
 -   Python installed on your system.
 -   Basic familiarity with Python programming.
--   Access to AI services like Claude or GPT-3.5 (if using AI-based generation).
+-   Access to AI services like Claude or GPT-4
 
-#### Setup and Configuration
 
-1.  **Install the Package**: If the tool is packaged and available on PyPI, you can install it using pip:
-    
-        `pip install AIDocStringGenerator` 
-		`AIDocStringGenerator` 
-    
+### Basic Setup and Configuration
 
-2.  **Configure the Tool**: Modify the `config.json` file to set up your preferences. Important configurations include:
+1.  **Install the Package**: If the tool is available on PyPI, install it using pip:
     
-    -   Path to the source files.
-    -   AI service settings (API keys, service URLs).
-    -   Flags for verbose output, wiping existing docstrings, etc.
+    `pip install AIDocStringGenerator` 
+    
+2.  **Initial Configuration**:
+    
+    -   Locate and rename `config_template.json` to `config.json` in the installed package directory.
+
+3.  **Configuration Parameters**:
+    
+    -   `path`: The file or directory path to process.
+    -   `wipe_docstrings`: If `true`, existing docstrings in files will be wiped before generating new ones.
+    -   `verbose`: Enable verbose output if set to `true`.
+    -   `bot`: Specify the AI bot to use (**gpt3.5, gpt4, gpt4-120k, claude, file**).
+    -   `bot_response_file`: parameter allows you to specify the name of a file or an array of files containing pre-defined responses. When this mode is active, instead of receiving live responses from an AI bot, the tool reads and uses responses from the specified file(s). This feature is particularly useful for emulating multi-part responses, where each file in the array represents a different part of a sequential response. This option can be beneficial in scenarios where direct interaction with an AI bot is not feasible, or when testing and debugging with predetermined responses."
+    -   `bard_api_key`, `openai_api_key`, `claude_api_key`: API keys for the respective AI services.
+    -   `include_subfolders`: Set to `true` to include subfolders in processing.
+    -   `verbosity_level`: Specifies verbosity level, e.g., "5 for class and 2 for functions".
+    -   `keep_responses`: If `true`, keeps the bot responses.
+    -   `ignore`: An array of strings containing file or directory names to exclude from processing. The tool skips any file or directory whose name matches an entry in this array. This is useful for omitting irrelevant or sensitive files and directories from the process. The matching is based on the name only, not the full path.
+
+
+4.  **Command Line Overrides**:
+    
+    -   Command line arguments allow you to override settings in `config.json`.
+    -   Example command:
+        
+        bashCopy code
+        
+        `AIDocStringGenerator --path "/path/to/source" --verbose --wipe_docstrings --bot "claude" --include_subfolders --verbosity_level "5"` 
+        
+
+### Continuous Integration (CI) Setup
+
+1.  **Use Command Line Parameters in CI**:
+    
+    -   In CI environments (e.g., Jenkins, GitHub Actions), prefer command line parameters for configuration.
+    -   This allows for dynamic adjustment of settings per CI run.
+2.  **Secure API Keys with CI Secrets**:
+    
+    -   Store sensitive data like API keys as environment secrets in your CI system.
+    -   Refer to these secrets in the command line arguments to ensure security.
+3.  **Example CI Configuration** (for GitHub Actions):
+    
+```yaml
+steps:
+- name: Run AIDocStringGenerator
+  run: |
+    AIDocStringGenerator --path "$GITHUB_WORKSPACE/path/to/source" \
+                         --verbose \
+                         --wipe_docstrings \
+                         --bot "claude" \
+                         --include_subfolders \
+                         --verbosity_level "5" \
+                         --bard_api_key ${{ secrets.BARD_API_KEY }} \
+                         --openai_api_key ${{ secrets.OPENAI_API_KEY }} \
+                         --claude_api_key ${{ secrets.CLAUDE_API_KEY }}
+```  
+
+ In this GitHub Actions example:    
+    -   `$GITHUB_WORKSPACE` is an environment variable indicating the workspace directory.
+    -   `secrets.BARD_API_KEY`, `secrets.OPENAI_API_KEY`, and `secrets.CLAUDE_API_KEY` are GitHub Actions secrets containing the API keys.
+    
+4.  **Setting Up Secrets in GitHub Actions**:
+    
+    -   Add API keys as secrets in the repository's Settings under 'Secrets'.
+    -   Ensure the names of the secrets in GitHub match those used in the command.
 
 #### Running the Generator
 
+### Running the Generator
+
 1.  **Process Files or Directories**:
     
-    -   Use the tool to process a single file or an entire directory of Python files.
-    -   The tool can be run from a command line or integrated into a larger Python project.
-2.  **Review Generated Docstrings**:
+    -   The tool is capable of processing either a single Python file or an entire directory containing multiple Python files.
+    -   To run the tool, use the command line interface. Hereâ€™s a basic example of how to execute the tool:
     
-    -   After running, review the generated docstrings to ensure they accurately reflect the codeâ€™s functionality.
-    -   Make manual adjustments if necessary for clarity or accuracy.
+        `AIDocStringGenerator --path "/path/to/python/files" --verbose` 
+        
+    -   This command processes Python files located at `"/path/to/python/files"`, with verbose output enabled.
+    - 
+2.  **Integration into Larger Projects**:
+    
+    -   If youâ€™re integrating the tool into a larger Python project, you can call it within your Python scripts or setup automated scripts to run it as part of your development workflow.
+
+5.  **Continuous Integration**:
+    
+    -   For continuous integration setups, consider using command line parameters with environment variables or CI secrets, especially for API keys. This ensures that the tool can be dynamically configured based on the CI environment while keeping sensitive information secure.
 
 #### Advanced Usage
 
 -   **Custom Templates**: If the tool allows, customize the templates used for generating docstrings to suit your projectâ€™s style or requirements.
-    
--   **Integrating with Version Control**: Automate docstring generation as part of your version control workflow, like a pre-commit hook in Git.
     
 -   **Continuous Integration**: Include the Docstring Generator in your CI pipeline to ensure that all new code comes with proper documentation.
     

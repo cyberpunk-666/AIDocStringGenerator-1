@@ -123,12 +123,7 @@ class OuterClass:
 
     def test_append_multiline_function(self):
         # Define a multi-line function example
-        multiline_example = """
-if True:
-    for i in range(3):
-        print(f"Line {i}")
-    print("End of multi-line example")
-"""
+        multiline_example = 'if True:\\n    for i in range(3):\\n        print(f"Line {i}")\\n        print("End of multi-line example")'        
         examples = {"TestClass": multiline_example}
         config = {"verbose": False}
 
@@ -145,3 +140,4 @@ if True:
         self.assertIn("for i in range(3):", content)
         self.assertIn("print(f\"Line {i}\")", content)
         self.assertIn("print(\"End of multi-line example\")", content)        
+

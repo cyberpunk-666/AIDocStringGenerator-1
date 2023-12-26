@@ -15,6 +15,8 @@ class ConfigManager:
         'bard': 'bard'
     }
 
+
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ConfigManager, cls).__new__(cls)

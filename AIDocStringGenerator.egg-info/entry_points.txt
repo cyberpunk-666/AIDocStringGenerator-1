@@ -1,2 +1,2 @@
 [console_scripts]
-myapp = AIDocstringGenerator.main:main
+AIDocstringGenerator = AIDocstringGenerator.AIDocstringGenerator:main

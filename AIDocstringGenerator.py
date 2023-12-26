@@ -33,16 +33,16 @@ def main():
     # Override configurations with command line arguments
     if args.path:
         config['path'] = args.path
-    if args.wipe_docstrings is not None:
-        config['wipe_docstrings'] = args.wipe_docstrings
-    if args.verbose is not None:
-        config['verbose'] = args.verbose
+    if args.wipe_docstrings == True:
+        config['wipe_docstrings'] = True
+    if args.verbose == True:
+        config['verbose'] = True
     if args.bot:
         config['bot'] = args.bot
     if args.bot_response_file:
         config['bot_response_file'] = args.bot_response_file
-    if args.include_subfolders is not None:
-        config['include_subfolders'] = args.include_subfolders
+    if args.include_subfolders == True:
+        config['include_subfolders'] = True
     if args.verbosity_level:
         config['verbosity_level'] = args.verbosity_level
     if args.bard_api_key:

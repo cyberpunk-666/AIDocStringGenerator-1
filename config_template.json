@@ -9,5 +9,6 @@
     "claude_api_key":"",
     "include_subfolders": false,
     "verbosity_level": "5 for class and 2 for functions",
-    "keep_responses": false
+    "keep_responses": false,
+    "ignore":[".venv"]
 }
