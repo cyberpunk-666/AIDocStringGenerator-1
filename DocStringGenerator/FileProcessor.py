@@ -122,7 +122,8 @@ The class is initialized with a configuration dictionary that contains settings 
         filename = file_path.name
         with open(FILES_PROCESSED_LOG, 'r') as log_file:
             processed_files = log_file.read().splitlines()
-        processed_files.remove(filename)
+        if filename in processed_files:
+            processed_files.remove(filename)
         with open(FILES_PROCESSED_LOG, 'w') as log_file:
             log_file.write('\n'.join(processed_files))
 
@@ -163,7 +164,7 @@ The class is initialized with a configuration dictionary that contains settings 
         else:
             print('Invalid path or file type. Please provide a Python file or directory.')
 
-    def process_file(self,file_path, config):
+    def process_file(self, file_path, config):
         """Processes a single Python file to generate and insert docstrings."""
         from DocStringGenerator.APICommunicator import APICommunicator
         from DocStringGenerator.DocstringProcessor import DocstringProcessor
@@ -178,40 +179,33 @@ The class is initialized with a configuration dictionary that contains settings 
             print(f'Processing file: {file_path.name}')
         with open(str(file_path.absolute()), 'r') as file:
             source_code = file.read()
+
         file_path_str = str(file_path)
-        task = ResultThread(target=APICommunicator(config).ask_for_docstrings, args=(source_code,config))
+        task = ResultThread(target=APICommunicator(config).ask_for_docstrings, args=(source_code, config))
         task.start()
         if not config["verbose"]:
             spinner = Spinner()
             spinner.wait_for(task)
             spinner.stop()
         task.join()
+
         if task.result:
-            responses, is_valid = task.result
-            if is_valid:                
-                docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
-                docstrings, success = docstrings_tuple
+            responses = task.result
+            docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
+            docstrings, success = docstrings_tuple
+            if success:
                 if config["keep_responses"]:
                     print(f'Extracted docstrings: {docstrings}')
                     self.save_response(file_path, docstrings)
 
-                if not success:                
-                    if config["verbose"]:
-                        print(f'Failed to generate docstrings for {file_path_str}')
-                    return False
-                DocstringProcessor(config).insert_docstrings(file_path,docstrings)
+                DocstringProcessor(config).insert_docstrings(file_path, docstrings)
                 if config["verbose"]:
                     print(f'Inserted docstrings in {file_path_str}')
 
                 parsed_examples = self.parse_examples_from_response(docstrings)
                 success, failed_function_names = self.add_example_functions_to_classes(file_path, parsed_examples, config)
-                if not success:
-                    if config["verbose"]:
-                        print(f'Failed to add example function to class {failed_function_names}. Retry.')
-                    responses = self._api_communicator.ask_examples_again(class_name=failed_function_names, config=config)
-                    examples = json.loads(responses)
-                    success, failed_function_names = self.add_example_functions_to_classes(file_path, examples, config)
-                    
+                if not success and config["verbose"]:
+                    print(f'Failed to add example functions to classes: {failed_function_names}')
             else:
                 if config["verbose"]:
                     print(f'Failed to generate docstrings for {file_path_str}')
@@ -222,7 +216,8 @@ The class is initialized with a configuration dictionary that contains settings 
             return False
         
         self.log_processed_file(file_path)
-        return True   
+        return True
+
 
     def wipe_docstrings(self, file_path: Path):
         """Removes all docstrings from a Python source file."""

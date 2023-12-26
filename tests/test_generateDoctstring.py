@@ -76,10 +76,10 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_ask_claude_for_docstrings(self):
         source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
-        claude_api_key = os.environ.get('API_KEY')
+        claude_api_key = os.environ.get('claude_api_key')
         config = {"verbose":False, "claude_api_key": claude_api_key,"bot":"claude", "model": "claude-2.1"}
         response = APICommunicator(self.config).ask_claude_for_docstrings(source_code, config)
-        valid = DocstringProcessor(config).validate_response(response, config)
+        docstrings, valid = DocstringProcessor(config).extract_docstrings([response], config)
         self.assertTrue(valid)        
         
     # def test_ask_openai_for_docstrings(self):
@@ -91,7 +91,7 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_send_code_in_parts(self):
         source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
-        claude_api_key = os.environ.get('API_KEY')
+        claude_api_key = os.environ.get('claude_api_key')
         config = {"verbose":False, 
                   "bot": "claude", 
                   "claude_api_key":claude_api_key

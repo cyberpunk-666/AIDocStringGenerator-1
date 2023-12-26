@@ -96,13 +96,8 @@ class DocstringProcessor:
 
 
             
-    def validate_response(self, response, config):
+    def validate_response(self, json_object, config):
         try:
-            json_object, is_valid, error_message = Utility.parse_json(response)
-            if not is_valid:
-                if config["verbose"]:
-                    print(f"Invalid response: {response}\nError: {error_message}")
-                return False
 
             if config["verbose"]:
                 print("Validating docstrings...")
@@ -141,11 +136,11 @@ class DocstringProcessor:
                 return False
 
             if config["verbose"]:
-                print(f"Validation successful for response: {response}")
+                print(f"Validation successful for response: {json_object}")
 
         except json.JSONDecodeError:
             if config["verbose"]:
-                print(f"JSON decoding error encountered for response: {response}")
+                print(f"JSON decoding error encountered for response: {json_object}")
             return False
 
         if config["verbose"]:
@@ -179,29 +174,34 @@ class DocstringProcessor:
         return merged_data
 
     def extract_docstrings(self, responses, config):
-        json_objects = []
-
+        # Merge responses before validity check
+        json_responses = []
         for response in responses:
-            try:
-                response_object, is_valid, error_message = Utility.parse_json(response)
-                if not is_valid:
-                    if config["verbose"]:
-                        print(f"Invalid response: {response},\nError: {error_message}")
-                    continue
-                if config["verbose"]:
-                    print(f"Extracted json object: {response_object}")
+            json_object, is_valid, error_message = Utility.parse_json(response)
+            if not is_valid:
+                if config['verbose']:
+                    print(f"Invalid response: {response}\nError: {error_message}")
+                return None, False
+            json_responses.append(json_object)
 
-                json_objects.append(response_object)
-            except (IndexError, ValueError, SyntaxError) as e:
-                if config["verbose"]:
-                    print(f'Error extracting docstrings: {e}')
-                continue
+        merged_response = self.merge_json_objects(json_responses)
 
-        merged_data = self.merge_json_objects(json_objects)
-        
-        # Extract docstrings from merged data
-        docstrings = merged_data.get("docstrings")
-
-        if docstrings is None:
+        # Check the validity of the merged response
+        is_valid = self.validate_response(merged_response, config)
+        if not is_valid:
+            if config['verbose']:
+                print("Invalid response after merging. Aborting extraction.")
             return None, False
-        return docstrings, True
+
+        # Extract docstrings from merged data
+        try:
+            docstrings = merged_response.get("docstrings", {})
+            if not docstrings:
+                if config['verbose']:
+                    print("No docstrings found in the merged response.")
+                return None, False
+            return docstrings, True
+        except json.JSONDecodeError as e:
+            if config['verbose']:
+                print(f"Error decoding JSON from merged response: {e}")
+            return None, False

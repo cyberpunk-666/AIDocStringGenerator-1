@@ -139,27 +139,29 @@ def test_function():
         self.assertEqual(modified_content.strip(), expected_modified_content.strip())
 
 
-def test_nested_classes(self):
-    self.temp_file.write("""
+    def test_nested_classes(self):
+        self.temp_file.write("""
 class OuterClass:
     class InnerClass:
         def inner_method(self):
             pass
-""")
-    self.temp_file.close()
+    """)
+        self.temp_file.close()
 
-    docstrings = {
-        "OuterClass": {
-            "docstring": "Comment for OuterClass"
-        },
-        "InnerClass": {
-            "docstring": "Comment for InnerClass",
-            "inner_method": "Comment for inner_method"
+        docstrings = {
+            "OuterClass": {
+                "docstring": "Comment for OuterClass"
+            },
+            "InnerClass": {
+                "docstring": "Comment for InnerClass",
+                "methods": {
+                    "inner_method": "Comment for inner_method"
+                }   
+            }
         }
-    }
-    modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
 
-    expected_modified_content = """
+        expected_modified_content = """
 class OuterClass:
     \"\"\"Comment for OuterClass\"\"\"
     class InnerClass:
@@ -167,9 +169,9 @@ class OuterClass:
         def inner_method(self):
             \"\"\"Comment for inner_method\"\"\"
             pass
-"""
+    """
 
-    self.assertEqual(modified_content.strip(), expected_modified_content.strip())
+        self.assertEqual(modified_content.strip(), expected_modified_content.strip())
 
 
 if __name__ == '__main__':

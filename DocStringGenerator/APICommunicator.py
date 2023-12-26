@@ -182,41 +182,46 @@ class APICommunicator:
         return self.ask_bard(prompt_template, replacements, config)
 
     def ask_for_docstrings(self, source_code, config):
+        responses = []
         if config['bot'] == 'file':
-            responses = []
+            # Handling file-based responses
             working_directory = os.getcwd()
-
             bot_response_files = config['bot_response_file']
             if not isinstance(bot_response_files, list):
-                bot_response_files = [bot_response_files]  # Make it a list if it's not
+                bot_response_files = [bot_response_files]  # Ensure it's a list
 
             for bot_file in bot_response_files:
-                # Check if bot_file is an absolute path
+                # Constructing file paths
                 if not os.path.isabs(bot_file):
-                    # If not, construct the path relative to the working_directory and tests folder
                     bot_file = os.path.join(working_directory, f"tests/{bot_file}.txt")
                 
                 with open(bot_file, 'r') as f:
                     response = f.read()
-
                 responses.append(response)
-                context_exceeded, is_valid = self.get_response_validity(responses, config)                
         else:
+            # Handling bot-based responses
             responses = self.send_code_in_parts(source_code, config)
-            context_exceeded, is_valid = self.get_response_validity(responses, config)
 
-            if not is_valid and not context_exceeded:
-                if config['verbose']:
-                    print('Retrying with the full code as the response format was incorrect.')
-                prompt_retry = Utility.load_prompt('prompts/prompt_retry')
-                if config['bot'] == 'claude':
-                    additional_response = self.ask_claude(prompt_retry, {}, config)
-                else:
-                    additional_response = self.ask_openai(prompt_retry, {}, config)
-                responses.append(additional_response)
+        return responses
 
-        return responses, is_valid
     
+    def ask_bot_with_retry(self, prompt_retry, config):
+        """
+        Asks the bot again using a retry prompt in case the initial response was invalid.
+
+        :param prompt_retry: The retry prompt to use.
+        :param config: Configuration dictionary.
+        :return: The bot's response to the retry prompt.
+        """
+        if config['verbose']:
+            print("Retrying with a different prompt due to invalid response.")
+
+        # Decide which bot to use based on the configuration
+        if config['bot'] == 'claude':
+            return self.ask_claude(prompt_retry, {}, config)
+        else:
+            return self.ask_openai(prompt_retry, {}, config)
+
     def ask_examples_again(self, class_name, config):
         if config["bot"] == "claude":
             response = self.ask_claude_for_examples(class_name, config)
@@ -264,15 +269,6 @@ class APICommunicator:
     
     EXPECTED_KEYS = {'docstrings'}
 
-    def get_response_validity(self, responses, config):
-        context_exceeded = any('context_length_exceeded' in response for response in responses)
-        for response in responses:
-            is_valid = DocstringProcessor(config).validate_response(response, config)
-
-        if not is_valid and not context_exceeded and config['verbose']:
-            print('The response format was incorrect.')
-
-        return context_exceeded, is_valid
     
     def ask_bard(self, prompt_template, replacements, config):
         prompt_template = prompt_template.replace('{verbosity_level}', str(config.get('verbosity_level', 2)))

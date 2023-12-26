@@ -88,8 +88,9 @@ Ensure the response follows the specified format and reflects the appropriate le
         load_dotenv()
         self.processor = DocstringProcessor(config={"verbose": False})
 
-    def test_validate_response(self):
-        self.assertTrue(self.processor.validate_response(TestDocstringProcessor.response, {"verbose": False}))
+    def test_extract_docstrings(self):
+        docstring, valid = self.processor.extract_docstrings([TestDocstringProcessor.response], {"verbose": False})
+        self.assertTrue(valid)
 
     def test_merge_json_objects(self):
         json_objects = [json.loads(SAMPLE_JSON_1), json.loads(SAMPLE_JSON_2)]
@@ -105,20 +106,20 @@ class TestExtractDocstrings(unittest.TestCase):
         self.config = {"verbose": False}
 
     def test_extract_docstrings(self):
-        responses = ['Some text\n{"docstrings": {"class1":{"example": "print()", "methods": {"test": "This is a test function"}}}}\nMore text']
+        responses = ['Some text\n{"docstrings": {"class1":{"docstring":"","example": "print()", "methods": {"test": "This is a test function"}}}}\nMore text']
         config = {"verbose": False}
         docstrings, is_valid = DocstringProcessor(self.config).extract_docstrings(responses, config)
         self.assertTrue(is_valid)
         assert isinstance(docstrings, dict)
-        assert docstrings == {'class1': {'example': 'print()', 'methods': {'test': 'This is a test function'}}}
+        assert docstrings == {'class1': {'docstring': '', 'example': 'print()', 'methods': {'test': 'This is a test function'}}}
         assert is_valid
 
     def test_extract_docstrings_valid(self):
-        responses = ['{"docstrings": {}, "examples": {}}']
+        responses = ['{"docstrings": {"class1":{"docstring":""}}}']
         docstrings, is_valid = self.docstring_processor.extract_docstrings(responses, self.config)
 
-        self.assertEqual(docstrings, {})
         self.assertTrue(is_valid)
+        self.assertEqual(docstrings, {'class1': {'docstring': ''}})
 
     def test_extract_docstrings_invalid(self):
         responses = ['invalid json response']

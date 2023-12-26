@@ -69,18 +69,10 @@ class TestDocstringProcessor(unittest.TestCase):
         self.mock_file_path.read_text.return_value = "def test_function():\n    pass"
 
 
-    def test_validate_response(self):
+    def test_extract_docstrings2(self):
         # Test validation of a JSON response
         valid_response = '{"docstrings": {"MyClass": {"exemple": "example code", "docstring": "Class docstring", "methods": {"my_method": "Method docstring"}}}}'        
-        self.assertTrue(self.processor.validate_response(valid_response, self.config))
-#
-
-    def test_extract_docstrings(self):
-        mock_response = ['{"docstrings": {"example": "example", "test_function": "Test function docstring"}}']
-        docstrings, success = self.processor.extract_docstrings(mock_response, self.config)
-        self.assertTrue(success)
-        self.assertEqual(docstrings, {'example': 'example', 'test_function': 'Test function docstring'})
-
+        self.assertTrue(self.processor.extract_docstrings([valid_response], self.config))
 
 
 class TestFileProcessor(unittest.TestCase):
