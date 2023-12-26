@@ -205,9 +205,7 @@ The class is initialized with a configuration dictionary that contains settings 
             docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
             docstrings, success = docstrings_tuple
             if success:
-                self.save_responses(file_path, docstrings)
                 if config["keep_responses"]:
-                    print(f'Extracted docstrings: {docstrings}')
                     if config["bot"] != "file":
                         self.save_response(file_path, docstrings)
 
