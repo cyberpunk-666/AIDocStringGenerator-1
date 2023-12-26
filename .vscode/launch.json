@@ -5,7 +5,7 @@
             "name": "Python: GenerateDocString",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/GenerateDocStringsv3.py",
+            "program": "${workspaceFolder}/AIDocstringGenerator.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },

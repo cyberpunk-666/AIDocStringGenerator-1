@@ -1,0 +1,13 @@
+{
+    "path": "",
+    "wipe_docstrings": true,
+    "verbose": true,
+    "bot": "claude",    
+    "bot_response_file": "",
+    "bard_api_key":"",
+    "openai_api_key":"",
+    "claude_api_key":"",
+    "include_subfolders": false,
+    "verbosity_level": "5 for class and 2 for functions",
+    "keep_responses": false
+}

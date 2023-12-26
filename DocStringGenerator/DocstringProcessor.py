@@ -40,7 +40,7 @@ class DocstringProcessor:
         for i, line in enumerate(content_lines):
             new_content.append(line)
             if i in insertions:
-                new_content.extend(insertions[i])  # Properly extend the list with the docstring lines
+                new_content.append(insertions[i])  # Properly extend the list with the docstring lines
 
         new_content = '\n'.join(new_content)
         file_path.write_text(new_content)
@@ -79,20 +79,26 @@ class DocstringProcessor:
 
     def _format_docstring(self, docstring, indent_level):
         indent = ' ' * indent_level
+
+        # Replace escaped newlines with actual newlines
+        docstring = docstring.replace('\\n', '\n')
         docstring_lines = docstring.splitlines()
 
         # If the docstring is multiline
         if len(docstring_lines) > 1:
-            formatted_docstring = [f'{indent}"""{docstring_lines[0]}']
-            for line in docstring_lines[1:-1]:
-                formatted_docstring.append(f'{indent}{line}')
-            # Append the last line along with the closing triple quotes
-            formatted_docstring.append(f'{indent}{docstring_lines[-1]}"""')
+            # Start the docstring with opening triple quotes on a new line
+            formatted_docstring = [f'{indent}\"\"\"']
+            # Add each line of the docstring, indented
+            formatted_docstring.extend(f'{indent}{line}' for line in docstring_lines)
+            # Append closing triple quotes on a new line
+            formatted_docstring.append(f'{indent}\"\"\"')
         else:
             # If the docstring is a single line, keep it on one line with the closing triple quotes
             formatted_docstring = [f'{indent}"""{docstring}"""']
 
-        return formatted_docstring
+        return '\n'.join(formatted_docstring)
+
+
 
 
             

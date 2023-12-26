@@ -45,7 +45,8 @@ class APICommunicator:
             prompt = prompt.replace(f'{{{key}}}', val)
         claude_prompt = 'Human: ' + prompt + '\n\nAssistant:'
         url = 'https://api.anthropic.com/v1/complete'
-        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': config['claude_api_key']}
+        claude_api_key = config['claude_api_key'] or os.environ.get('claude_api_key')
+        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': claude_api_key}
         model = ConfigManager.get_model(config['bot'])
         data = {'model': model, 'prompt': claude_prompt, 'max_tokens_to_sample': 4000, 'stream': True}
 
@@ -136,7 +137,8 @@ class APICommunicator:
             prompt = prompt.replace(f'{{{key}}}', val)
         messages = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': prompt}]
         model = ConfigManager.get_model(config['bot'])
-        client = OpenAI(api_key=config['openai_api_key'])
+        openai_api_key = config['openai_api_key'] or os.environ.get('openai_api_key')
+        client = OpenAI(api_key=openai_api_key)
 
         try:
             stream = client.chat.completions.create(model=model, messages=messages, temperature=0, stream=True)

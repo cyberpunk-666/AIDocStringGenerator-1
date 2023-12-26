@@ -12,10 +12,12 @@ The current verbosity level for this task is set to {verbosity_level} and should
 
 Please adhere to the following JSON format for the response, ensuring the usage of simple double quotes for strings:
 
+Also, try to make lines not more than 160 characters
+
 {
     "docstrings": {
         "ClassName": {
-            "docstring": "ClassName description",
+            "docstring": "ClassName description\\nDescription continue",
             "example": "variable = ClassName.function1_name()\\nprint(variable)",
             "methods": {
                 "function1_name": "function1_name description",

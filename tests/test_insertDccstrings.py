@@ -173,6 +173,35 @@ class OuterClass:
 
         self.assertEqual(modified_content.strip(), expected_modified_content.strip())
 
+    def test_multi_line_docstrings(self):
+        self.temp_file.write("""
+class MyClass:
+    def my_method(self):
+        pass
+""")
+        self.temp_file.close()
+
+        multi_line_docstring = "This is a multi-line docstring.\\nIt spans multiple lines and describes the class or method."
+
+        docstrings = {
+            "MyClass": {
+                "docstring": multi_line_docstring
+            }
+        }
+        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+
+        expected_content = """
+class MyClass:
+    \"\"\"
+    This is a multi-line docstring.
+    It spans multiple lines and describes the class or method.
+    \"\"\"
+    def my_method(self):
+        pass
+"""
+        self.assertEqual(modified_content.strip(), expected_content.strip())
+
+
 
 if __name__ == '__main__':
     unittest.main()
