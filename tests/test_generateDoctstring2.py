@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 class TestAPICommunicator(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"model":"claude2.1", "bot": "claude",'openai_api_key': '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', 'claude_api_key': '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', 'verbose': False}
+        self.config = {"model":"claude2.1", "bot": "claude",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': False}
         self.communicator = APICommunicator(self.config)
 
     @patch('requests.post')
@@ -62,7 +62,7 @@ class TestAPICommunicator(unittest.TestCase):
 class TestDocstringProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"model":"claude2.1", "bot": "claude",'openai_api_key': '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', 'claude_api_key': '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', 'verbose': True}
+        self.config = {"model":"claude2.1", "bot": "claude",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': True}
 
         self.processor = DocstringProcessor(self.config)
         self.mock_file_path = MagicMock()
@@ -78,7 +78,7 @@ class TestDocstringProcessor(unittest.TestCase):
 class TestFileProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"keep_responses": False, "model":"file", "bot": "file",'openai_api_key': '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', 'claude_api_key': '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', 'verbose': False}
+        self.config = {"keep_responses": False, "model":"file", "bot": "file",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': False}
         self.file_processor = FileProcessor(self.config)
 
     def test_process_file(self):

@@ -125,3 +125,9 @@ class Utility:
     def example_function_Utility(self):
         prompt = Utility.load_prompt('prompt_file')
         print(Utility.convert_newlines(prompt))
+
+    def print_long_string(self, long_string):
+        n = 1000  # number of characters to display at a time
+
+        for i in range(0, len(long_string), n):
+            print(long_string[i:i+n], "")         

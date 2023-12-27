@@ -224,6 +224,7 @@ The class is initialized with a configuration dictionary that contains settings 
             else:
                 if config["verbose"]:
                     print(f'Failed to generate docstrings for {file_path_str}')
+                retry_response = APICommunicator(config).ask_retry(self.config)
                 return False
         else:
             if config["verbose"]:
@@ -231,6 +232,61 @@ The class is initialized with a configuration dictionary that contains settings 
             return False
         
         return True
+
+    def process_file(self, file_path, config):
+        """Processes a single Python file to generate and insert docstrings."""
+        from DocStringGenerator.APICommunicator import APICommunicator
+        from DocStringGenerator.DocstringProcessor import DocstringProcessor
+
+        file_name = os.path.basename(file_path)
+        processed = self.is_file_processed(file_name)
+        if processed:
+            if config["verbose"]:
+                print(f'File {file_name} already processed. Skipping.')
+            return True
+
+        if config["verbose"]:
+            print(f'Processing file: {file_name}')
+        with open(file_path, 'r') as file:
+            source_code = file.read()
+
+        success, docstrings = self.try_generate_docstrings(source_code, config)
+        if success:
+            self.process_successful_docstrings(file_path, docstrings, config)
+        else:
+            if config["verbose"]:
+                print(f'Failed to generate docstrings for {file_name}')
+            return False
+
+        return True
+
+    def try_generate_docstrings(self, source_code, config):
+        """Attempts to generate docstrings, retrying if necessary."""
+        api_communicator = APICommunicator(config)
+        task = ResultThread(target=api_communicator.get_response, args=(source_code, config))
+        task.start()
+        task.join()
+
+        if task.result:
+            responses = task.result
+            docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
+            docstrings, success = docstrings_tuple
+            if success:
+                return True, docstrings
+
+        # If no response or not success, try retry method
+        retry_response = api_communicator.ask_retry(config)
+        docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
+        docstrings, success = docstrings_tuple
+        return True, retry_response
+
+    def process_successful_docstrings(self, file_path, docstrings, config):
+        """Processes successful docstring generation."""
+        from DocStringGenerator.DocstringProcessor import DocstringProcessor
+
+        DocstringProcessor(config).insert_docstrings(file_path, docstrings)
+        if config["verbose"]:
+            print(f'Inserted docstrings in {file_path}')
 
     def save_response(self, file_path: Path,  docstrings):
         """

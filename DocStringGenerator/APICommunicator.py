@@ -31,12 +31,7 @@ class APICommunicator:
         self.config = config
         self.claude_url = 'https://api.anthropic.com/v1/complete'
 
-        
-    def print_long_string(self, long_string):
-        n = 1000  # number of characters to display at a time
-
-        for i in range(0, len(long_string), n):
-            print(long_string[i:i+n], "")            
+               
 
     def ask_claude(self, prompt_template, replacements, config):
         prompt = prompt_template
@@ -44,15 +39,13 @@ class APICommunicator:
             prompt = prompt.replace(f'{{{key}}}', val)
         claude_prompt = 'Human: ' + prompt + '\n\nAssistant:'
         url = 'https://api.anthropic.com/v1/complete'
-        claude_api_key = config['claude_api_key'] or os.environ.get('claude_api_key')
-        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': claude_api_key}
+        CLAUDE_API_KEY = config['CLAUDE_API_KEY'] or os.environ.get('CLAUDE_API_KEY')
+        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': CLAUDE_API_KEY}
         model = ConfigManager.get_model(config['bot'])
         data = {'model': model, 'prompt': claude_prompt, 'max_tokens_to_sample': 4000, 'stream': True}
 
         if config['verbose']:
-            self.print_long_string(f'Sending prompt to API: {claude_prompt}')
-            #print(f'Sending prompt to API: {claude_prompt}')
-
+            Utility.print_long_string(f'Sending prompt to API: {claude_prompt}')
         try:
             response = requests.post(url, headers=headers, data=json.dumps(data), stream=True)
             full_completion = ''
@@ -126,8 +119,8 @@ class APICommunicator:
             prompt = prompt.replace(f'{{{key}}}', val)
         messages = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': prompt}]
         model = ConfigManager.get_model(config['bot'])
-        openai_api_key = config['openai_api_key'] or os.environ.get('openai_api_key')
-        client = OpenAI(api_key=openai_api_key)
+        OPENAI_API_KEY = config['OPENAI_API_KEY'] or os.environ.get('OPENAI_API_KEY')
+        client = OpenAI(api_key=OPENAI_API_KEY)
 
         try:
             stream = client.chat.completions.create(model=model, messages=messages, temperature=0, stream=True)
@@ -163,23 +156,6 @@ class APICommunicator:
             return f'API error occurred: {e}'        
 
 
-    def ask_for_docstrings(self, source_code, config):
-        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
-        replacements = {'source_code': source_code, 
-                        'verbosity_level': str(config.get('verbosity_level', 2)),
-                        'max_line_length': str(config.get('max_line_length', 79)),
-                        "class_docstrings_verbosity_level": str(config.get("class_docstrings_verbosity_level",5)),
-                        "function_docstrings_verbosity_level":  str(config.get("function_docstrings_verbosity_level",2)),
-                        "example_verbosity_level": str(config.get("example_verbosity_level",3))
-                        }
-                
-        if config['bot'] == 'claude':
-            return self.ask_claude(prompt_template, replacements, config)
-        elif config['bot'] == 'bard':
-            return self.ask_bard(prompt_template, replacements, config)
-        else:
-            return self.ask_openai(prompt_template, replacements, config)
-
 
     def get_response(self, source_code, config):
         responses = []
@@ -196,56 +172,51 @@ class APICommunicator:
             # Remove file extension if present
             base_bot_file, _ = os.path.splitext(base_bot_file)
 
-            counter = 1
             bot_file = f"{base_bot_file}.response.json"
             while os.path.exists(bot_file):
                 with open(bot_file, 'r') as f:
                     response_text = f.read()  # Read the raw string content
                     responses.append(response_text)
-
-                # Prepare the next file name
-                counter += 1
-                bot_file = f"{base_bot_file}.response{counter}.json"
+                bot_file = f"{base_bot_file}.response.json"
         else:
             # Handling bot-based responses
             responses = self.send_code_in_parts(source_code, config)
 
         return responses
 
-    
-    def ask_bot_with_retry(self, prompt_retry, config):
-        """
-        Asks the bot again using a retry prompt in case the initial response was invalid.
+    def ask(self, prompt, replacement):
+        if self.config['bot'] == 'claude':
+            return self.ask_claude(prompt, replacement, self.config)
+        elif self.config['bot'] == 'bard':
+            return self.ask_bard(prompt, replacement, self.config)
+        elif self.config['bot'] == 'openai':
+            return self.ask_openai(prompt, replacement, self.config)
+        elif self.config['bot'] == 'file':
+            return self.ask_file(prompt, replacement, self.config)
 
-        :param prompt_retry: The retry prompt to use.
-        :param config: Configuration dictionary.
-        :return: The bot's response to the retry prompt.
-        """
-        if config['verbose']:
-            print("Retrying with a different prompt due to invalid response.")
 
-        # Decide which bot to use based on the configuration
-        if config['bot'] == 'claude':
-            return self.ask_claude(prompt_retry, {}, config)
-        else:
-            return self.ask_openai(prompt_retry, {}, config)
+    def ask_retry(self, config):
+        prompt_template = Utility.load_prompt('prompts/prompt_retry')
+        return self.ask(prompt_template, {}, config)
+  
 
-    def ask_examples_again(self, class_name, config):
-        if config["bot"] == "claude":
-            response = self.ask_claude_for_examples(class_name, config)
-        else:
-            response = self.ask_openai_for_examples(class_name, config)
-        return response    
-
-    def ask_claude_for_examples(self, class_name, config):
+    def ask_retry_examples(self, class_name, config):
         prompt_template = Utility.load_prompt('prompts/prompt_retry_example')
         replacements = {'class_name': class_name}
-        return self.ask_claude(prompt_template, replacements, config)
+        self.ask(prompt_template, replacements, config)
+        
+    def ask_for_docstrings(self, source_code, config):
+        prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
+        replacements = {'source_code': source_code, 
+                        'verbosity_level': str(config.get('verbosity_level', 2)),
+                        'max_line_length': str(config.get('max_line_length', 79)),
+                        "class_docstrings_verbosity_level": str(config.get("class_docstrings_verbosity_level",5)),
+                        "function_docstrings_verbosity_level":  str(config.get("function_docstrings_verbosity_level",2)),
+                        "example_verbosity_level": str(config.get("example_verbosity_level",3))
+                        }
+                
+        return self.ask(prompt_template, replacements, config)
 
-    def ask_openai_for_examples(self, class_name, config):
-        prompt_template = Utility.load_prompt('prompts/prompt_retry_example')
-        replacements = {'class_name': class_name}
-        return self.ask_openai(prompt_template, replacements, config)
 
     def send_code_in_parts(self, source_code, config):
 
@@ -282,3 +253,4 @@ class APICommunicator:
         bard = Bard(token_from_browser=True)
         response = bard.get_answer(prompt)
         return response['content']
+    

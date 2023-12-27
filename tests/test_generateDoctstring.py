@@ -61,7 +61,7 @@ class TestDocStringGenerator(unittest.TestCase):
         replacements = {"question": "the meaning of life"}
         config = {
             "verbose": False, 
-            "claude_api_key": "your_api_key",
+            "CLAUDE_API_KEY": "your_api_key",
             "bot": "claude", 
             "model": "claude-2.1"
         }
@@ -76,25 +76,25 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_ask_claude_for_docstrings(self):
         source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
-        claude_api_key = os.environ.get('claude_api_key')
-        config = {"verbose":False, "claude_api_key": claude_api_key,"bot":"claude", "model": "claude-2.1"}
+        CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
+        config = {"verbose":False, "CLAUDE_API_KEY": CLAUDE_API_KEY,"bot":"claude", "model": "claude-2.1"}
         response = APICommunicator(self.config).ask_for_docstrings(source_code, config)
         docstrings, valid = DocstringProcessor(config).extract_docstrings([response], config)
         self.assertTrue(valid)        
         
     # def test_ask_openai_for_docstrings(self):
     #     source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
-    #     config = {"verbose":False, "openai_api_key": "","bot":"gpt3.5"}
+    #     config = {"verbose":False, "OPENAI_API_KEY": "","bot":"gpt3.5"}
     #     response = APICommunicator(self.config).ask_openai_for_docstrings(source_code, config)
     #     valid = DocstringProcessor(config).validate_response(response, config)
     #     self.assertTrue(valid)          
 
     def test_send_code_in_parts(self):
         source_code = "def function(self):\n    pass\n\nclass MyClass:\n    pass\n"
-        claude_api_key = os.environ.get('claude_api_key')
+        CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
         config = {"verbose":False, 
                   "bot": "claude", 
-                  "claude_api_key":claude_api_key
+                  "CLAUDE_API_KEY":CLAUDE_API_KEY
                 }
         responses = APICommunicator(self.config).send_code_in_parts(source_code, config)
         _, is_valid = DocstringProcessor(self.config).extract_docstrings(responses, config)

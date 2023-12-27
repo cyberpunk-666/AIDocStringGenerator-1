@@ -21,9 +21,9 @@ def main():
     parser.add_argument('--bot_response_file', type=str, help='File for storing bot responses')
     parser.add_argument('--include_subfolders', action='store_true', help='Process subfolders')
     parser.add_argument('--verbosity_level', type=str, help='Set verbosity level')
-    parser.add_argument('--bard_api_key', type=str, help='API key for Bard')
-    parser.add_argument('--openai_api_key', type=str, help='API key for OpenAI')
-    parser.add_argument('--claude_api_key', type=str, help='API key for Claude')
+    parser.add_argument('--BARD_API_KEY', type=str, help='API key for Bard')
+    parser.add_argument('--OPENAI_API_KEY', type=str, help='API key for OpenAI')
+    parser.add_argument('--CLAUDE_API_KEY', type=str, help='API key for Claude')
 
     args = parser.parse_args()
 
@@ -45,12 +45,12 @@ def main():
         config['include_subfolders'] = True
     if args.verbosity_level:
         config['verbosity_level'] = args.verbosity_level
-    if args.bard_api_key:
-        config['bard_api_key'] = args.bard_api_key
-    if args.openai_api_key:
-        config['openai_api_key'] = args.openai_api_key
-    if args.claude_api_key:
-        config['claude_api_key'] = args.claude_api_key
+    if args.BARD_API_KEY:
+        config['BARD_API_KEY'] = args.BARD_API_KEY
+    if args.OPENAI_API_KEY:
+        config['OPENAI_API_KEY'] = args.OPENAI_API_KEY
+    if args.CLAUDE_API_KEY:
+        config['CLAUDE_API_KEY'] = args.CLAUDE_API_KEY
 
     file_processor = FileProcessor(config)
     file_processor.process_folder_or_file(config)

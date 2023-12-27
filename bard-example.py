@@ -1,5 +1,14 @@
-from bardapi import Bard
 
-bard = Bard(token="egihLdsiDZ84lZ7vLBBZKNpkNoiMeW7olDmd2PR26qVgYP8uMkcox94CascfZuyDv5N94w.")
-res = bard.get_answer("Do you like cookies?")
-print(res['content'])
+import google_bard
+ 
+# Replace "YOUR_API_KEY" with the actual API Key obtained earlier
+API_KEY = "AIzaSyCEsEc9ooTwCl8rukRUY58NqmamMR_erWw"
+ 
+def main():
+    query = "What is the meaning of life?"
+    response = google_bard.generate_text(query, api_key=API_KEY)
+    print("Google Bard Response (Using google_bard Module):")
+    print(response)
+ 
+if __name__ == "__main__":
+    main()
