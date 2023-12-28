@@ -6,13 +6,16 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from DocStringGenerator.FileProcessor import FileProcessor
 from dotenv import load_dotenv
+from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.APICommunicator import *
 
 class TestCodeSplitter(unittest.TestCase):
     
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.code_splitter = FileProcessor(self.config)
+        self.code_splitter = dependencies.resolve("FileProcessor")
 
     def test_split_simple_code(self):
         code = "line1\nline2\nline3\nline4"

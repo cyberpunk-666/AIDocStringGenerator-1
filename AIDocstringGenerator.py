@@ -2,8 +2,12 @@ import os
 import platform
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+
+dependencies = DependencyContainer()
 from pathlib import Path
 import argparse
+
 
 
 def clear_screen():
@@ -24,36 +28,26 @@ def main():
     parser.add_argument('--BARD_API_KEY', type=str, help='API key for Bard')
     parser.add_argument('--OPENAI_API_KEY', type=str, help='API key for OpenAI')
     parser.add_argument('--CLAUDE_API_KEY', type=str, help='API key for Claude')
+    parser.add_argument('--keep_responses', action='store_true', help='Keep responses in the output')
+    parser.add_argument('--ignore', type=str, help='Specify patterns to ignore')
+    parser.add_argument('--class_docstrings_verbosity_level', type=int, default=5, help='Verbosity level for class docstrings')
+    parser.add_argument('--function_docstrings_verbosity_level', type=int, default=2, help='Verbosity level for function docstrings')
+    parser.add_argument('--example_verbosity_level', type=int, default=3, help='Verbosity level for examples')
+    parser.add_argument('--max_line_length', type=int, default=79, help='Maximum line length for formatting')    
 
     args = parser.parse_args()
 
     config_manager = ConfigManager()
     config = config_manager.load_or_create_config()
 
-    # Override configurations with command line arguments
-    if args.path:
-        config['path'] = args.path
-    if args.wipe_docstrings == True:
-        config['wipe_docstrings'] = True
-    if args.verbose == True:
-        config['verbose'] = True
-    if args.bot:
-        config['bot'] = args.bot
-    if args.bot_response_file:
-        config['bot_response_file'] = args.bot_response_file
-    if args.include_subfolders == True:
-        config['include_subfolders'] = True
-    if args.verbosity_level:
-        config['verbosity_level'] = args.verbosity_level
-    if args.BARD_API_KEY:
-        config['BARD_API_KEY'] = args.BARD_API_KEY
-    if args.OPENAI_API_KEY:
-        config['OPENAI_API_KEY'] = args.OPENAI_API_KEY
-    if args.CLAUDE_API_KEY:
-        config['CLAUDE_API_KEY'] = args.CLAUDE_API_KEY
+    # Override config with command line arguments
+    for arg in vars(args):
+        value = getattr(args, arg)
+        if value:
+            config[arg] = value        
 
-    file_processor = FileProcessor(config)
-    file_processor.process_folder_or_file(config)
+    file_processor = dependencies.resolve("FileProcessor")
+    file_processor.process_folder_or_file()
 
 if __name__ == '__main__':
     main()

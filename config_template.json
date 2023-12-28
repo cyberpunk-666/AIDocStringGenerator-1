@@ -2,13 +2,16 @@
     "path": "",
     "wipe_docstrings": true,
     "verbose": true,
-    "bot": "claude",    
-    "bot_response_file": "",
+    "bot": "file",    
+    "model": "classTest",
     "BARD_API_KEY":"",
     "OPENAI_API_KEY":"",
     "CLAUDE_API_KEY":"",
     "include_subfolders": false,
-    "verbosity_level": "5 for class and 2 for functions",
     "keep_responses": false,
-    "ignore":[".venv"]
+    "ignore":"",
+    "class_docstrings_verbosity_level": 5,
+    "function_docstrings_verbosity_level": 2,
+    "example_verbosity_level":3,
+    "max_line_length": 79
 }

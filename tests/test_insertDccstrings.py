@@ -2,15 +2,18 @@ import unittest
 import tempfile
 from pathlib import Path
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
 from dotenv import load_dotenv
 
+dependencies = DependencyContainer()
 class TestInsertDocstrings(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         # Create a temporary file for testing
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.py', mode='w')
         self.file_path = Path(self.temp_file.name)
-        self.config = {"verbose": True}
+        dependencies.resolve("DocstringProcessor")
+        # self.config = {"verbose": True}
 
     def test_insert_docstrings(self):
         self.temp_file.write("""
@@ -29,7 +32,7 @@ class MyClass:
                 }
             }
         }
-        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         expected_content = """
 class MyClass:
@@ -61,7 +64,7 @@ class MyClass:
                 }
             }
         }
-        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
         
         self.assertIn("\"\"\"Comment for method_one\"\"\"", modified_content)
         self.assertIn("\"\"\"Comment for method_two\"\"\"", modified_content)
@@ -75,7 +78,7 @@ class MyClass:
         self.temp_file.close()
 
         docstrings = {"NonExistentMethod": {"docstring": "Comment for NonExistentMethod"}}
-        DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         with open(self.file_path, 'r') as file:
             modified_content = file.read()
@@ -95,7 +98,7 @@ class MyClass:
                 "docstring": "Comment for MyClass"
             }
         }  
-        DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         with open(self.file_path, 'r') as file:
             content = file.read()
@@ -123,7 +126,7 @@ def test_function():
         self.temp_file.write(mock_content)
         self.temp_file.close()
 
-        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         expected_modified_content = """
 class TestClass:
@@ -159,7 +162,7 @@ class OuterClass:
                 }   
             }
         }
-        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         expected_modified_content = """
 class OuterClass:
@@ -188,7 +191,7 @@ class MyClass:
                 "docstring": multi_line_docstring
             }
         }
-        modified_content = DocstringProcessor(self.config).insert_docstrings(self.file_path, docstrings)
+        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
         expected_content = """
 class MyClass:

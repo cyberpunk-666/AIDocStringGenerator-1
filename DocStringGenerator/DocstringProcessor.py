@@ -5,10 +5,12 @@ from typing import Dict, Tuple
 import ast
 import logging
 import json
-from DocStringGenerator.Utility import Utility
+from DocStringGenerator.Utility import APIResponse, Utility
 from pathlib import Path
 from json.decoder import JSONDecodeError
 import tempfile
+from DocStringGenerator.ConfigManager import ConfigManager
+from DocStringGenerator.DependencyContainer import DependencyContainer
 
 class DocstringProcessor:
     """The `DocstringProcessor` class is a singleton that provides functionality to insert docstrings into a Python source file.
@@ -19,18 +21,18 @@ class DocstringProcessor:
     """
     _instance = None
     
-    def __new__(cls, config: dict):
+    def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DocstringProcessor, cls).__new__(cls)
             # Initialize the instance only once
             
         return cls._instance
 
-    def __init__(self, config: dict):
-        self.config = config
+    def __init__(self):
+        self.config = ConfigManager().config
 
-    def insert_docstrings(self, file_path: Path, docstrings: Dict[str, Dict[str, str]]):
-        content = file_path.read_text()
+    def insert_docstrings(self, content, docstrings: Dict[str, Dict[str, str]]):
+
         content_lines = content.splitlines()
         tree = ast.parse(content)
 
@@ -43,7 +45,6 @@ class DocstringProcessor:
                 new_content.append(insertions[i])  # Properly extend the list with the docstring lines
 
         new_content = '\n'.join(new_content)
-        file_path.write_text(new_content)
         return new_content
 
     def _prepare_insertions(self, tree, content_lines, docstrings):
@@ -98,20 +99,17 @@ class DocstringProcessor:
 
         return '\n'.join(formatted_docstring)
 
-
-
-
             
-    def validate_response(self, json_object, config):
+    def validate_response(self, json_object):
         try:
 
-            if config["verbose"]:
+            if self.config.get('verbose', ""):
                 print("Validating docstrings...")
 
             # Validate docstrings
             docstrings = json_object.get("docstrings", {})
             if not isinstance(docstrings, dict):
-                if config["verbose"]:
+                if self.config.get('verbose', ""):
                     print("Invalid format: 'docstrings' should be a dictionary.")
                 return False
 
@@ -119,37 +117,37 @@ class DocstringProcessor:
             for key, value in docstrings.items():
                 if key == "global_functions":
                     if not isinstance(value, dict):
-                        if config["verbose"]:
+                        if self.config.get('verbose', ""):
                             print(f"Invalid format: Global functions under '{key}' should be a dictionary.")
                         return False
                 else:
                     if not isinstance(value, dict) or "docstring" not in value:
-                        if config["verbose"]:
+                        if self.config.get('verbose', ""):
                             print(f"Invalid format: Class '{key}' should contain a 'docstring'.")
                         return False
                     if "methods" in value and not isinstance(value["methods"], dict):
-                        if config["verbose"]:
+                        if self.config.get('verbose', ""):
                             print(f"Invalid format: Methods under class '{key}' should be a dictionary.")
                         return False
 
-            if config["verbose"]:
+            if self.config.get('verbose', ""):
                 print("Validating examples...")
 
             # Validate examples
             if "examples" in json_object and not isinstance(json_object["examples"], dict):
-                if config["verbose"]:
+                if self.config.get('verbose', ""):
                     print("Invalid format: 'examples' should be a dictionary.")
                 return False
 
-            if config["verbose"]:
+            if self.config.get('verbose', ""):
                 print(f"Validation successful for response: {json_object}")
 
         except json.JSONDecodeError:
-            if config["verbose"]:
+            if self.config.get('verbose', ""):
                 print(f"JSON decoding error encountered for response: {json_object}")
             return False
 
-        if config["verbose"]:
+        if self.config.get('verbose', ""):
             print("Response validated successfully.")
 
         return True
@@ -179,35 +177,35 @@ class DocstringProcessor:
 
         return merged_data
 
-    def extract_docstrings(self, responses, config):
+    def extract_docstrings(self, responses) -> APIResponse:
         # Merge responses before validity check
         json_responses = []
         for response in responses:
             json_object, is_valid, error_message = Utility.parse_json(response)
             if not is_valid:
-                if config['verbose']:
-                    print(f"Invalid response: {response}\nError: {error_message}")
-                return None, False
+                message: str = f"Invalid response: {response}\nError: {error_message}"
+                if self.config.get('verbose', ""):                    
+                    print(message)
+                return APIResponse("", False, message)
             json_responses.append(json_object)
 
         merged_response = self.merge_json_objects(json_responses)
 
         # Check the validity of the merged response
-        is_valid = self.validate_response(merged_response, config)
+        is_valid = self.validate_response(merged_response)
         if not is_valid:
-            if config['verbose']:
-                print("Invalid response after merging. Aborting extraction.")
-            return None, False
+            message: str = f"Invalid response after merging. Aborting extraction."
+            if self.config.get('verbose', ""):                    
+                print(message)
+            return APIResponse("", False, message)            
 
         # Extract docstrings from merged data
-        try:
-            docstrings = merged_response.get("docstrings", {})
-            if not docstrings:
-                if config['verbose']:
-                    print("No docstrings found in the merged response.")
-                return None, False
-            return docstrings, True
-        except json.JSONDecodeError as e:
-            if config['verbose']:
-                print(f"Error decoding JSON from merged response: {e}")
-            return None, False
+        docstrings = merged_response.get("docstrings", {})
+        if docstrings:
+            return APIResponse(docstrings, True)
+        
+        return APIResponse("", False, "No docstrings found in response.")               
+
+
+dependencies = DependencyContainer()
+dependencies.register('DocstringProcessor', DocstringProcessor)

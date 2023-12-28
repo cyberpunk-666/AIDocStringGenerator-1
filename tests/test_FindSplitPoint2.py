@@ -1,3 +1,4 @@
+from typing import cast, Any
 import random
 import unittest
 import ast
@@ -8,15 +9,24 @@ current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
-from DocStringGenerator.FileProcessor import FileProcessor
 from dotenv import load_dotenv
+
+from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.APICommunicator import *
+
 
 class TestSourceCodeSplitting(unittest.TestCase):
 
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.instance = FileProcessor(self.config)
+        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
+        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
+
+        self.instance = dependencies.resolve("FileProcessor")
 
     # Tests for find_split_point
     def test_split_point_valid_code(self):
@@ -63,8 +73,9 @@ class TestSourceCodeSplitting(unittest.TestCase):
     def test_find_split_point_in_children_recursive(self):
         node = ast.FunctionDef()
         node.body = [ast.If()]
-        node.body[0].body = [ast.Pass()]
-        node.end_lineno = 4
+        sub_node: Any = cast(Any, node.body[0]) 
+        sub_node.body = [ast.Pass()]
+        node.end_lineno = 4 
         node.lineno = 1
         self.assertEqual(self.instance.find_split_point_in_children(node, 5), 4)
 
@@ -117,7 +128,7 @@ class TestSourceCodeSplittingAdvanced(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.instance = FileProcessor(self.config)
+        self.instance = dependencies.resolve("FileProcessor")
 
     # Test with Nested Functions and Classes
     def test_nested_functions_classes(self):

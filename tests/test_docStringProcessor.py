@@ -3,13 +3,17 @@ import json
 import sys
 import os
 from unittest.mock import patch
+from urllib import response
 
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.Utility import Utility
+from DocStringGenerator.DependencyContainer import DependencyContainer
+from DocStringGenerator.APICommunicator import *
 from dotenv import load_dotenv
+
+dependencies = DependencyContainer()
 
 SAMPLE_JSON_1 = json.dumps({
     "docstrings": {
@@ -19,7 +23,7 @@ SAMPLE_JSON_1 = json.dumps({
         }
     },
     "examples": {
-        "example_APICommunicator": "api_com = APICommunicator(config)"
+        "example_APICommunicator": "api_com = APICommunicator()"
     }
 })
 
@@ -31,7 +35,7 @@ SAMPLE_JSON_2 = json.dumps({
         }
     },
     "examples": {
-        "example_DocstringProcessor": "processor = DocstringProcessor(config)"
+        "example_DocstringProcessor": "processor = DocstringProcessor()"
     }
 })
 
@@ -86,15 +90,17 @@ Ensure the response follows the specified format and reflects the appropriate le
         """
     def setUp(self):
         load_dotenv()
-        self.processor = DocstringProcessor(config={"verbose": False})
+        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
+        self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator        
 
     def test_extract_docstrings(self):
-        docstring, valid = self.processor.extract_docstrings([TestDocstringProcessor.response], {"verbose": False})
-        self.assertTrue(valid)
+        response = self.docstring_processor.extract_docstrings([TestDocstringProcessor.response])
+        self.assertTrue(response.is_valid)
 
     def test_merge_json_objects(self):
         json_objects = [json.loads(SAMPLE_JSON_1), json.loads(SAMPLE_JSON_2)]
-        merged = self.processor.merge_json_objects(json_objects)
+        merged = self.docstring_processor.merge_json_objects(json_objects)
         self.assertIn("APICommunicator", merged["docstrings"])
         self.assertIn("DocstringProcessor", merged["docstrings"])
 
@@ -102,30 +108,42 @@ Ensure the response follows the specified format and reflects the appropriate le
 class TestExtractDocstrings(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.docstring_processor = DocstringProcessor({"verbose": False})
+        self.docstring_processor = DocstringProcessor()
         self.config = {"verbose": False}
 
     def test_extract_docstrings(self):
-        responses = ['Some text\n{"docstrings": {"class1":{"docstring":"","example": "print()", "methods": {"test": "This is a test function"}}}}\nMore text']
+        
+        responses = ["""
+```json
+{
+    "docstrings": {
+        "MyClass": {
+            "docstring": "A basic placeholder class for demonstration purposes.",
+            "example": "my_object = MyClass()\\nmy_object.my_method()",
+            "methods": {
+                "my_method": "A placeholder method that does nothing."
+            }
+        }
+    }
+}
+```
+"""]
         config = {"verbose": False}
-        docstrings, is_valid = DocstringProcessor(self.config).extract_docstrings(responses, config)
-        self.assertTrue(is_valid)
-        assert isinstance(docstrings, dict)
-        assert docstrings == {'class1': {'docstring': '', 'example': 'print()', 'methods': {'test': 'This is a test function'}}}
-        assert is_valid
+        response = self.docstring_processor.extract_docstrings(responses)
+        self.assertTrue(response.is_valid)
+        assert isinstance(response.content, dict)
+        assert response.content == {'MyClass': {'docstring': 'A basic placeholder class for demonstration purposes.', 'example': 'my_object = MyClass()\nmy_object.my_method()', 'methods': {'my_method': 'A placeholder method that does nothing.'}}}
 
     def test_extract_docstrings_valid(self):
         responses = ['{"docstrings": {"class1":{"docstring":""}}}']
-        docstrings, is_valid = self.docstring_processor.extract_docstrings(responses, self.config)
-
-        self.assertTrue(is_valid)
-        self.assertEqual(docstrings, {'class1': {'docstring': ''}})
+        response = self.docstring_processor.extract_docstrings(responses)
+        self.assertTrue(response.is_valid)
+        self.assertEqual(response.content, {'class1': {'docstring': ''}})
 
     def test_extract_docstrings_invalid(self):
         responses = ['invalid json response']
-        _, is_valid = self.docstring_processor.extract_docstrings(responses, self.config)
-
-        self.assertFalse(is_valid)
+        response = self.docstring_processor.extract_docstrings(responses)
+        self.assertFalse(response.is_valid)
 # Add more tests as needed
 
 if __name__ == '__main__':

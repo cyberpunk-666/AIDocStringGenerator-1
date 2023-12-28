@@ -2,35 +2,38 @@ import os
 import io
 from pathlib import Path
 from typing import List
+from typing import cast, Any
 import ast
 import json
 import logging
-from DocStringGenerator.APICommunicator import APICommunicator
+
+from DocStringGenerator.APICommunicator import *
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from typing import Dict
 from DocStringGenerator.Spinner import Spinner
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.Utility import Utility
+from DocStringGenerator.DependencyContainer import DependencyContainer
+from DocStringGenerator.ConfigManager import ConfigManager
 
 FILES_PROCESSED_LOG = "files_processed.log"
-    
+MAX_RETRY_LIMIT = 2
 class FileProcessor:
-    """The `FileProcessor` class is designed to handle the processing of Python source files for the purpose of generating, inserting, or removing docstrings. It utilizes an `APICommunicator` to communicate with an external API that provides the docstrings and a `DocstringProcessor` to handle the insertion of the generated docstrings into the source files. This class follows the Singleton design pattern, ensuring that only one instance of `FileProcessor` exists throughout the application's lifecycle.
-
-The class provides methods to split source code into manageable parts, check if a file has been processed, process individual files or entire directories, and remove existing docstrings from source files. It also includes utility methods to find split points in the source code based on abstract syntax tree (AST) analysis and to list files in a directory with a specific extension.
-
-The class is initialized with a configuration dictionary that contains settings for the docstring generation process, such as verbosity level and API endpoint. The configuration is used by the `APICommunicator` and `DocstringProcessor` to tailor the docstring generation and insertion process according to the user's preferences."""
     _instance = None
-    def __new__(cls, config: dict):
+
+    def __new__(cls):
         if cls._instance is None:
             cls._instance = super(FileProcessor, cls).__new__(cls)
-            # Initialize the instance only once
-            
         return cls._instance
         
-    def __init__(self, config: dict):
-        self._api_communicator = APICommunicator(config)
-        self.config = config   
+    def __init__(self):
+        if not hasattr(self, '_initialized'):  # Prevent reinitialization
+            self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+            self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
+            self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
+            self.config = ConfigManager().config
+            self._initialized = True
+
 
     def find_split_point(self, source_code: str, max_lines: int = 2048, start_node=None) -> int:
         """Finds a suitable point to split the source code into smaller parts."""
@@ -43,7 +46,7 @@ The class is initialized with a configuration dictionary that contains settings 
             split_point = min(max_lines, source_code.count("\n"))
         return split_point
 
-    def find_end_line(self, node, max_lines):
+    def find_end_line(self, node, max_lines) -> int | None:
         """Determines the end line number for a given AST node."""
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if max_lines >= node.end_lineno:
@@ -55,35 +58,40 @@ The class is initialized with a configuration dictionary that contains settings 
         else:
             return -1
 
-    def find_split_point_in_children(self, node, max_lines, recursive=True):
+
+    def find_split_point_in_children(self, node: ast.AST, max_lines: int, recursive=True):
         """Recursively finds a split point within the children of an AST node."""
-        end_line = max(self.find_end_line(node, max_lines), 0)
-        child_split_point = 0
-        if max_lines >= end_line:
-            child_split_point = end_line
+
+        def safe_end_line(node: ast.AST, max_lines: int) -> int:
+            """ Safely get the end line or return 0 if None. """
+            end_line = self.find_end_line(node, max_lines)
+            return max(end_line, 0) if end_line is not None else 0
+
+        child_split_point = safe_end_line(node, max_lines)
+        if max_lines < child_split_point:
+            child_split_point = 0
+
+        def process_node(child_node: ast.AST):
+            nonlocal child_split_point
+            if child_node:
+                if recursive and (hasattr(child_node, "body") or hasattr(child_node, "orelse")):
+                    child_split_point = max(child_split_point,
+                                            self.find_split_point_in_children(child_node, max_lines, recursive))
+                
+                end_line = safe_end_line(child_node, max_lines)
+                if max_lines >= end_line and end_line > child_split_point:
+                    child_split_point = end_line
+
         if hasattr(node, "body"):
-            for child_node in node.body:
-                if child_node:
-                    if recursive and (hasattr(child_node, "body") or hasattr(child_node, "orelse")):
-                        child_split_point = max(child_split_point or 0,
-                                            self.find_split_point_in_children(child_node, max_lines, recursive))
-                                        
-                    end_line = max(self.find_end_line(child_node, max_lines), 0)
-                    if max_lines >= end_line and end_line > child_split_point:                  
-                        child_split_point = max(child_split_point or 0, end_line)
-        if hasattr(node, "orelse") and not child_split_point:
-            for child_node in node.orelse:
-                if child_node:
-                    if recursive and (hasattr(child_node, "body") or hasattr(child_node, "orelse")):
-                        child_split_point = max(child_split_point or 0,
-                                            self.find_split_point_in_children(child_node, max_lines, recursive))
-                    
-                    end_line = max(self.find_end_line(child_node, max_lines), 0)
-                    if max_lines >= end_line and end_line > child_split_point:                  
-                        child_split_point = max(child_split_point or 0, end_line)
+            for child_node in getattr(node, "body", []):
+                process_node(child_node)
+
+        if hasattr(node, "orelse"):
+            for child_node in getattr(node, "orelse", []):
+                process_node(child_node)
+
         return child_split_point
 
-    
 
     def split_source_code(self, source_code: str, num_parts: int):
         """Splits the source code into a specified number of parts."""
@@ -137,10 +145,10 @@ The class is initialized with a configuration dictionary that contains settings 
         except FileNotFoundError:
             return False
 
-    def process_folder_or_file(self, config):
-            path = Path(config['path'])
-            include_subfolders = config.get('include_subfolders', False)
-            ignore_list = set(config.get('ignore', []))  # Convert ignore list to a set for faster lookup
+    def process_folder_or_file(self):
+            path = Path(self.config.get('path', ""))
+            include_subfolders = self.config.get('include_subfolders', False)
+            ignore_list = set(self.config.get('ignore', []))  # Convert ignore list to a set for faster lookup
 
             if os.path.isdir(path):
                 for root, dirs, files in os.walk(path):
@@ -157,136 +165,136 @@ The class is initialized with a configuration dictionary that contains settings 
 
                         full_file_path = Path(root, file)
                         if file.endswith('.py'):
-                            if config.get('wipe_docstrings', False):
+                            if self.config.get('wipe_docstrings', False):
                                 self.wipe_docstrings(full_file_path)
                             
-                            success = self.process_file(full_file_path.absolute(), config)
+                            success = self.process_file(full_file_path.absolute())
                             if not success:
                                 print(f'Failed to process {str(full_file_path.absolute())}')
                                     
             elif os.path.isfile(path) and str(path).endswith('.py'):
-                if config.get('wipe_docstrings', False):
+                if self.config.get('wipe_docstrings', False):
                     self.wipe_docstrings(path)
 
                 if path.name not in ignore_list:
-                    success = self.process_file(path.absolute(), config)
+                    success = self.process_file(path.absolute())
                     if not success:
                         print(f'Failed to process {path}')
             else:
                 print('Invalid path or file type. Please provide a Python file or directory.')
 
-    def process_file(self, file_path, config):
-        """Processes a single Python file to generate and insert docstrings."""
-        from DocStringGenerator.APICommunicator import APICommunicator
-        from DocStringGenerator.DocstringProcessor import DocstringProcessor
+
+
+    def process_file(self, file_path) -> APIResponse:
         file_name = os.path.basename(file_path)
         processed = self.is_file_processed(file_name)
         if processed:
-            if config["verbose"]:
-                print(f'File {str(file_path)} already processed. Skipping.')
-            return True
+            message = f'File {file_name} already processed. Skipping.'
+            if self.config.get('verbose', ""):
+                print(message)
+            return APIResponse("", False, message)
 
-        if config["verbose"]:
-            print(f'Processing file: {file_path.name}')
-        with open(str(file_path.absolute()), 'r') as file:
-            source_code = file.read()
-
-        file_path_str = str(file_path)
-        task = ResultThread(target=APICommunicator(config).get_response, args=(source_code, config))
-        task.start()
-        if not config["verbose"]:
-            spinner = Spinner()
-            spinner.wait_for(task)
-            spinner.stop()
-        task.join()
-
-        if task.result:
-            responses = task.result
-            docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
-            docstrings, success = docstrings_tuple
-            if success:
-                if config["keep_responses"]:
-                    if config["bot"] != "file":
-                        self.save_response(file_path, docstrings)
-
-                DocstringProcessor(config).insert_docstrings(file_path, docstrings)
-                if config["verbose"]:
-                    print(f'Inserted docstrings in {file_path_str}')
-
-                parsed_examples = self.parse_examples_from_response(docstrings)
-                success, failed_function_names = self.add_example_functions_to_classes(file_path, parsed_examples, config)
-                if "path" in config:
-                    path = config["path"]
-                    if os.path.isdir(path):
-                        self.log_processed_file(file_path)
-                if not success and config["verbose"]:
-                    print(f'Failed to add example functions to classes: {failed_function_names}')
-            else:
-                if config["verbose"]:
-                    print(f'Failed to generate docstrings for {file_path_str}')
-                retry_response = APICommunicator(config).ask_retry(self.config)
-                return False
-        else:
-            if config["verbose"]:
-                print(f'No response received for file: {file_path_str}')
-            return False
-        
-        return True
-
-    def process_file(self, file_path, config):
-        """Processes a single Python file to generate and insert docstrings."""
-        from DocStringGenerator.APICommunicator import APICommunicator
-        from DocStringGenerator.DocstringProcessor import DocstringProcessor
-
-        file_name = os.path.basename(file_path)
-        processed = self.is_file_processed(file_name)
-        if processed:
-            if config["verbose"]:
-                print(f'File {file_name} already processed. Skipping.')
-            return True
-
-        if config["verbose"]:
-            print(f'Processing file: {file_name}')
+        ask_count = 0
+        # Read the source code from the file
         with open(file_path, 'r') as file:
-            source_code = file.read()
+            source_code = file.read() 
 
-        success, docstrings = self.try_generate_docstrings(source_code, config)
-        if success:
-            self.process_successful_docstrings(file_path, docstrings, config)
-        else:
-            if config["verbose"]:
-                print(f'Failed to generate docstrings for {file_name}')
-            return False
+        while True:
+            ask_count += 1
+            response_docstrings: APIResponse = self.try_generate_docstrings(source_code, ask_count)
+            if response_docstrings.is_valid:
+                source_code = self.docstring_processor.insert_docstrings(source_code, response_docstrings.content)
+                break
+            else:
+                if ask_count == MAX_RETRY_LIMIT:  # Define MAX_RETRY_LIMIT as per your requirement
+                    break
 
-        return True
+        process_examples_response = self.process_examples(source_code, response_docstrings)
+        return process_examples_response
 
-    def try_generate_docstrings(self, source_code, config):
+    
+    def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:
+        if response_docstrings.is_valid:
+            parsed_examples = self.parse_examples_from_response(response_docstrings.content)
+            if parsed_examples.is_valid:
+                add_example_response = self.add_example_functions_to_classes(source_code, parsed_examples.content)
+            else:
+                return parsed_examples
+
+            if add_example_response.is_valid:
+                return APIResponse(add_example_response.content, True)
+            else:
+                failed_function_names = add_example_response.content
+                retry_examples_response = self.ask_retry_examples(failed_function_names)
+
+                if retry_examples_response.is_valid:
+                    new_parsed_examples = self.parse_examples_from_response(retry_examples_response.content)
+                    add_example_response = self.add_example_functions_to_classes(source_code, new_parsed_examples.content)
+                    if add_example_response.is_valid:                    
+                        return add_example_response
+                else:
+                    return retry_examples_response
+
+            return APIResponse(source_code, True)
+
+        return APIResponse("", False)    
+         
+    def ask_retry_examples(self, failed_function_names) -> APIResponse:
+        """
+        Requests a retry for generating examples for specific class names.
+        :param failed_function_names: List of function names for which examples failed to generate.
+        :return: APIResponse object with the result of the retry attempt.
+        """
+
+        if not self.bot_communicator:
+            return APIResponse("", False, "Bot communicator not available.")
+
+        # Request the bot communicator to retry generating examples for the failed functions
+        retry_response = self.bot_communicator.ask_retry_examples(failed_function_names)
+
+        if not retry_response.is_valid:
+            return APIResponse("", False, "Failed to retrieve new examples.")
+
+        return retry_response
+
+    def try_generate_docstrings(self, source_code, retry_count) -> APIResponse:
         """Attempts to generate docstrings, retrying if necessary."""
-        api_communicator = APICommunicator(config)
-        task = ResultThread(target=api_communicator.get_response, args=(source_code, config))
-        task.start()
-        task.join()
+        if not self.bot_communicator:
+            return APIResponse("", False)
 
-        if task.result:
-            responses = task.result
-            docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
-            docstrings, success = docstrings_tuple
-            if success:
-                return True, docstrings
 
+        # Check if the communicator is of type FileCommunicator
+        if isinstance(self.bot_communicator, FileCommunicator):
+            result = self.communicator_manager.handle_file_based_responses()
+        else:
+            if retry_count == 1:
+                result = self.communicator_manager.send_code_in_parts(source_code)
+            else:
+                if self.communicator_manager.bot_communicator:
+                    result = self.communicator_manager.bot_communicator.ask_retry()
+                else:
+                    return APIResponse("", False)
+
+
+        if result.is_valid:
+            docstring_response: APIResponse = self.docstring_processor.extract_docstrings(result.content)
+            if docstring_response.is_valid:
+                return docstring_response
+        else:
+            return APIResponse("", False)
+            
         # If no response or not success, try retry method
-        retry_response = api_communicator.ask_retry(config)
-        docstrings_tuple = DocstringProcessor(config).extract_docstrings(responses, config)
-        docstrings, success = docstrings_tuple
-        return True, retry_response
+        
+        if self.bot_communicator:
+            retry_response = self.bot_communicator.ask_retry()
+            if retry_response and not retry_response.is_valid:
+                return retry_response
+            docstring_response = self.docstring_processor.extract_docstrings(retry_response)
+            if not docstring_response.is_valid:
+                return docstring_response
+            
+        return docstring_response
 
-    def process_successful_docstrings(self, file_path, docstrings, config):
-        """Processes successful docstring generation."""
-        from DocStringGenerator.DocstringProcessor import DocstringProcessor
-
-        DocstringProcessor(config).insert_docstrings(file_path, docstrings)
-        if config["verbose"]:
-            print(f'Inserted docstrings in {file_path}')
 
     def save_response(self, file_path: Path,  docstrings):
         """
@@ -320,32 +328,29 @@ The class is initialized with a configuration dictionary that contains settings 
         """Lists all files in a directory with a given file extension."""
         return [f for f in directory.iterdir() if f.suffix == extension]  
     
-    def parse_examples_from_response(self, docstrings: dict):
+    def parse_examples_from_response(self, docstrings: dict) -> APIResponse:
         parsed_examples = {}
-        
-        for class_or_func_name, content in docstrings.items():
-            # Extract the example for the class or function
-            class_example = content.get("example")
-            if class_example:
-                if class_or_func_name not in parsed_examples:
-                    parsed_examples[class_or_func_name] = []
-                parsed_examples[class_or_func_name] = class_example
-
-        return parsed_examples
+        try:
+            for class_or_func_name, content in docstrings.items():
+                # Extract the example for the class or function
+                class_example = content.get("example")
+                if class_example:
+                    if class_or_func_name not in parsed_examples:
+                        parsed_examples[class_or_func_name] = []
+                    parsed_examples[class_or_func_name] = class_example
+            return APIResponse(parsed_examples, True)
+        except Exception as e:
+            return APIResponse("", False, f"Failed to parse examples from response: {e}")
 
     
 
-
-    def add_example_functions_to_classes(self, file_path, examples, config):
+    def add_example_functions_to_classes(self, code_source, examples) -> APIResponse:
         success = True
         failed_class_names = []
 
-        with open(file_path, 'r') as file:
-            content = file.read()
-
         for class_name, example_code in examples.items():
             try:
-                tree = ast.parse(content)  # Re-parse the content each time
+                tree = ast.parse(code_source)
                 end_line_number = None
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ClassDef) and node.name == class_name:
@@ -353,36 +358,36 @@ The class is initialized with a configuration dictionary that contains settings 
                         break
 
                 if end_line_number is not None:
-                    content_lines = content.splitlines()
-                    # Prepare the function definition for validation
+                    content_lines = code_source.splitlines()
                     example_code = example_code.replace("\\n", "\n")
                     validation_code = f"def example_function_{class_name}(self):\n{self.add_indentation(example_code, 1)}"
-                    if not Utility.is_valid_python(validation_code, config):
-                        if config["verbose"]:
+                    if not Utility.is_valid_python(validation_code):
+                        if self.config.get('verbose', ""):
                             print(f"Invalid example code for class {class_name}.")
                         success = False
                         failed_class_names.append(class_name)
-                        continue
+                        continue  # Keep processing other classes
 
-                    # Proper indentation for insertion
                     function_def_str = f"\n    def example_function_{class_name}(self):\n{self.add_indentation(example_code, 2)}"
                     content_lines.insert(end_line_number, function_def_str)
-                    content = "\n".join(content_lines)
+                    code_source = "\n".join(content_lines)
                 else:
-                    if config["verbose"]:
+                    if self.config.get('verbose', ""):
                         print(f"Class {class_name} not found.")
                     success = False
                     failed_class_names.append(class_name)
+
             except Exception as e:
-                if config["verbose"]:
+                if self.config.get('verbose', ""):
                     print(f"Failed to append example to class {class_name}: {e}")
                 success = False
                 failed_class_names.append(class_name)
 
-        with open(file_path, 'w') as file:
-            file.write(content)
+        if not success:
+            return APIResponse(failed_class_names, False, "Failed to add example functions to some classes.")
+        return APIResponse(code_source, True)
 
-        return success, failed_class_names
+
 
 
     def add_indentation(self, source_code: str, indent: int) -> str:
@@ -403,3 +408,7 @@ class DocstringRemover(ast.NodeTransformer):
             node.body.pop(0)
         self.generic_visit(node)  # Visit children nodes
         return node
+    
+dependencies = DependencyContainer()
+dependencies.register('DocstringRemover', DocstringRemover)
+dependencies.register('FileProcessor', FileProcessor)

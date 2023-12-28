@@ -56,6 +56,7 @@ Please adhere to the following JSON format for the response, using simple double
     }
 }
 
+Note the double backslash "\\n" for break line in examples
 
 Remember to strictly enforce the {max_line_length}-character limit on all lines within the generated JSON response.
 

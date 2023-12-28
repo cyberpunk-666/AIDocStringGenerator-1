@@ -1,11 +1,17 @@
 import os
 import ast
 from pathlib import Path
-from typing import Dict
-from DocStringGenerator.ResultThread import ResultThread
+from typing import Any, Dict 
 from DocStringGenerator.Spinner import Spinner
 import json
 import re
+from dataclasses import dataclass
+
+@dataclass
+class APIResponse:
+    content: Any
+    is_valid: bool
+    error_message: str = ""
 
 class Utility:
     """
@@ -15,7 +21,7 @@ class Utility:
     """
 
     @staticmethod
-    def extract_json(input_string):
+    def extract_json(input_string) -> APIResponse:
         """
         Extracts valid JSON string from input text, checking for
         balanced braces and valid JSON format. Returns tuple
@@ -26,7 +32,7 @@ class Utility:
         in_string = False
         escape = False
         start_index = None
-        found_json_string = None
+        found_json_string = ""
         is_valid = True
         error_message = ''
         for i, char in enumerate(input_string):
@@ -57,7 +63,7 @@ class Utility:
         if not found_json_string or found_json_string.strip() == '':
             is_valid = False
             error_message = 'No JSON string found.'
-        return (found_json_string, is_valid, error_message)
+        return APIResponse(found_json_string, is_valid, error_message)
 
     @staticmethod
     def parse_json(text):
@@ -69,8 +75,11 @@ class Utility:
         json_object = None
         is_valid = True
         error_message = None
+        json_string = ""
         try:
-            json_string, is_valid, error_message = Utility.extract_json(text)
+            
+            response = Utility.extract_json(text)
+            json_string = response.content
             if is_valid:
                 json_object = json.loads(json_string)
             else:
@@ -91,7 +100,7 @@ class Utility:
         return json.loads(config_path.read_text())
 
     @staticmethod
-    def load_prompt(file, base_path='.'):
+    def load_prompt(file, base_path='.') -> str:
         """
         Loads text content from a file in base path, handling
         new lines.
@@ -112,13 +121,13 @@ class Utility:
             return content
 
     @staticmethod
-    def is_valid_python(code, config=None):
+    def is_valid_python(code, config=None) -> bool:
         """Checks if given Python code text is valid syntactically."""
         try:
             compile(code, '<string>', 'exec')
             return True
         except SyntaxError as e:
-            if config and config['verbose']:
+            if config and config.get('verbose', ""):
                 print(f'Invalid Python code: {e}')
             return False
 

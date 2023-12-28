@@ -12,16 +12,19 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
 
-from DocStringGenerator.APICommunicator import APICommunicator
+from DocStringGenerator.APICommunicator import *
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.ConfigManager import ConfigManager
 from dotenv import load_dotenv
 
 class TestAPICommunicator(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"model":"claude2.1", "bot": "claude",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': False}
-        self.communicator = APICommunicator(self.config)
+        ConfigManager(initial_config={"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})        
+        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        if self.communicator_manager.bot_communicator:
+            self.bot_communicator: BaseBotCommunicator = self.communicator_manager.bot_communicator
 
     @patch('requests.post')
     def test_send_request(self, mock_post):
@@ -33,16 +36,16 @@ class TestAPICommunicator(unittest.TestCase):
         ])
         mock_post.return_value = mock_response
 
-        response = self.communicator.ask_for_docstrings('test code', self.config)
-        self.assertIn('mocked completion', response) 
+        response = self.bot_communicator.ask_for_docstrings('test code')
+        self.assertIn('mocked completion', response.content) 
 
     @patch('requests.post')
     def test_error_handling(self, mock_post):
         # Simulate an exception during the request
         mock_post.side_effect = Exception("Connection error")
 
-        response = self.communicator.ask_for_docstrings('test code', self.config)
-        self.assertIn('Error during Claude API call', response)
+        response = self.bot_communicator.ask_for_docstrings('test code')
+        self.assertIn('Error during Claude API call', response.content)
 
     @patch('requests.post')
     def test_response_parsing(self, mock_post):
@@ -55,16 +58,15 @@ class TestAPICommunicator(unittest.TestCase):
         mock_response.iter_lines.return_value = valid_response
         mock_post.return_value = mock_response
 
-        response = self.communicator.ask_for_docstrings('test code', self.config)
-        self.assertIn('test docstring', response)
+        response = self.bot_communicator.ask_for_docstrings('test code')
+        self.assertIn('test docstring', response.content)
 
 
 class TestDocstringProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"model":"claude2.1", "bot": "claude",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': True}
 
-        self.processor = DocstringProcessor(self.config)
+        self.processor = dependencies.resolve("DocstringProcessor")
         self.mock_file_path = MagicMock()
         self.mock_file_path.read_text.return_value = "def test_function():\n    pass"
 
@@ -72,18 +74,16 @@ class TestDocstringProcessor(unittest.TestCase):
     def test_extract_docstrings2(self):
         # Test validation of a JSON response
         valid_response = '{"docstrings": {"MyClass": {"exemple": "example code", "docstring": "Class docstring", "methods": {"my_method": "Method docstring"}}}}'        
-        self.assertTrue(self.processor.extract_docstrings([valid_response], self.config))
+        self.assertTrue(self.processor.extract_docstrings([valid_response]))
 
 
 class TestFileProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.config = {"keep_responses": False, "model":"file", "bot": "file",'OPENAI_API_KEY': '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', 'CLAUDE_API_KEY': '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', 'verbose': False}
-        self.file_processor = FileProcessor(self.config)
+        ConfigManager(initial_config={"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})
+        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
 
     def test_process_file(self):
-        self.config = {"keep_responses": False, "verbose": True, "bot": "file", "bot_response_file": "classTest"}
-
         classTest_file_path = Path('./tests/classTest_orig.py')
         temp_dir = tempfile.mkdtemp()  # Create a temporary directory
         temp_file_path = Path(temp_dir, 'classTest_temp.py')
@@ -92,8 +92,8 @@ class TestFileProcessor(unittest.TestCase):
         shutil.copy2(str(classTest_file_path), str(temp_file_path))
 
         # Create a FileProcessor instance and call process_file on the temp file
-        file_processor = FileProcessor(self.config)
-        success = file_processor.process_file(temp_file_path, self.config)
+        file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        success = file_processor.process_file(temp_file_path)
 
         # Assert that the process was successful
         self.assertTrue(success)
@@ -131,9 +131,9 @@ class TestFileProcessor(unittest.TestCase):
         # Mocking the process_file method to simulate file processing
         mock_process_file.return_value = True
 
-        file_processor = FileProcessor(self.config)
+        file_processor = dependencies.resolve("FileProcessor")
 
-        file_processor.process_file("tests/classTest_orig.py", self.config)
+        file_processor.process_file("tests/classTest_orig.py")
 
         # Assuming the directory contains two Python files
         self.assertEqual(mock_process_file.call_count, 1)
@@ -211,16 +211,13 @@ class TestFileProcessor(unittest.TestCase):
             stem = Path(new_docstrings_response_file_path).stem
 
             directory_path = new_docstrings_response_file_path.parent
-            self.config["bot_response_file"] = str(Path(directory_path, stem).absolute())
+            ConfigManager().set_config('model', str(Path(directory_path, stem).absolute()))
 
-            success = FileProcessor(self.config).process_file(new_test_script_file_path, self.config)
-            self.assertTrue(success)
+            response = self.file_processor.process_file(new_test_script_file_path)
+            self.assertTrue(response.is_valid)
 
-            with open(new_test_script_file_path, 'r') as file:
-                result = file.read()
-
-            self.assertEqual(result, final_script_with_comments)  
-            FileProcessor(self.config).removed_from_processed_log(new_test_script_file_path)
+            self.assertEqual(response.content, final_script_with_comments)  
+            dependencies.resolve("FileProcessor").removed_from_processed_log(new_test_script_file_path)
 
 
 if __name__ == '__main__':

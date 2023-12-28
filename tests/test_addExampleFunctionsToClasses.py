@@ -6,14 +6,27 @@ current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.Utility import Utility
+from DocStringGenerator.DependencyContainer import DependencyContainer
 from dotenv import load_dotenv
+from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.APICommunicator import *
 
+
+dependencies = DependencyContainer()
 class test_addExampleFunctionsToClasses(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
         # Create a temporary file to use for testing
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.py', mode='w+')
+        
+        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
+        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
+
         self.file_path = self.temp_file.name
         self.temp_file.write("""
 class TestClass:
@@ -29,7 +42,7 @@ class TestClass:
     def test_append_function_success(self):
         examples = {"TestClass": "print('Hello, World!')"}
         config = {"verbose": False}
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertTrue(success)
 
         with open(self.file_path, 'r') as file:
@@ -41,7 +54,7 @@ class TestClass:
     def test_append_function_nonexistent_class(self):
         examples = {"NonExistentClass": "print('This should not work')"}
         config = {"verbose": False}
-        success, failed_class_names = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, failed_class_names = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertFalse(success)
         self.assertIn("NonExistentClass", failed_class_names)    
 
@@ -58,8 +71,8 @@ class AnotherTestClass:
             "TestClass": "print('Hello from TestClass')",
             "AnotherTestClass": "print('Hello from AnotherTestClass')"
         }
-        config = {"verbose": False}
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        config = {"verbose": False}        
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertTrue(success)
 
         with open(self.file_path, 'r') as file:
@@ -71,7 +84,7 @@ class AnotherTestClass:
     def test_append_complex_code_snippet(self):
         examples = {"TestClass": "for i in range(5):\n    print(i)"}
         config = {"verbose": False}
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertTrue(success)
 
         with open(self.file_path, 'r') as file:
@@ -83,7 +96,7 @@ class AnotherTestClass:
     def test_invalid_python_code(self):
         examples = {"TestClass": "if True print('Missing colon')"}
         config = {"verbose": False}
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertFalse(success)
 
         with open(self.file_path, 'r') as file:
@@ -102,7 +115,7 @@ class OuterClass:
 
         examples = {"InnerClass": "print('Hello from InnerClass')"}
         config = {"verbose": False}
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertTrue(success)
 
         with open(self.file_path, 'r') as file:
@@ -117,7 +130,7 @@ class OuterClass:
 
         examples = {"TestClass": "print('Hello from TestClass')"}
         config = {"verbose": False}
-        success, failed_class_names = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, failed_class_names = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertFalse(success)
         self.assertIn("TestClass", failed_class_names)
 
@@ -128,7 +141,7 @@ class OuterClass:
         config = {"verbose": False}
 
         # Append the multi-line function to TestClass
-        success, _ = FileProcessor(self.config).add_example_functions_to_classes(self.file_path, examples, config)
+        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertTrue(success)
 
         # Read and check the modified file content
