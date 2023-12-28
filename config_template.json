@@ -13,5 +13,6 @@
     "class_docstrings_verbosity_level": 5,
     "function_docstrings_verbosity_level": 2,
     "example_verbosity_level":3,
-    "max_line_length": 79
+    "max_line_length": 79,
+    "dry_run": false
 }

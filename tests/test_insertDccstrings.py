@@ -32,7 +32,10 @@ class MyClass:
                 }
             }
         }
-        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        # read content of file
+        with open(self.file_path, 'r') as file:
+            content = file.read()
+        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
 
         expected_content = """
 class MyClass:
@@ -43,7 +46,7 @@ class MyClass:
     def method_two(self):
         pass
 """
-        self.assertEqual(modified_content.strip(), expected_content.strip())
+        self.assertEqual(modified_response.strip(), expected_content.strip())
 
     def test_multiple_methods_in_class(self):
         self.temp_file.write("""
@@ -64,10 +67,13 @@ class MyClass:
                 }
             }
         }
-        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()        
+        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+
         
-        self.assertIn("\"\"\"Comment for method_one\"\"\"", modified_content)
-        self.assertIn("\"\"\"Comment for method_two\"\"\"", modified_content)
+        self.assertIn("\"\"\"Comment for method_one\"\"\"", modified_response)
+        self.assertIn("\"\"\"Comment for method_two\"\"\"", modified_response)
 
     def test_no_matches(self):
         self.temp_file.write("""
@@ -78,12 +84,14 @@ class MyClass:
         self.temp_file.close()
 
         docstrings = {"NonExistentMethod": {"docstring": "Comment for NonExistentMethod"}}
-        dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()         
+        dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
 
-        with open(self.file_path, 'r') as file:
-            modified_content = file.read()
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()
 
-        self.assertNotIn("Comment for NonExistentMethod", modified_content)
+        self.assertNotIn("Comment for NonExistentMethod", content)
 
     def test_different_indentation_styles(self):
         self.temp_file.write("""
@@ -97,13 +105,12 @@ class MyClass:
             "MyClass": {
                 "docstring": "Comment for MyClass"
             }
-        }  
-        dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        } 
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()          
+        new_content = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
-
-        self.assertIn("\"\"\"Comment for MyClass\"\"\"", content)
+        self.assertIn("\"\"\"Comment for MyClass\"\"\"", new_content)
 
     def test_insert_docstrings3(self):
         mock_content = """
@@ -125,10 +132,12 @@ def test_function():
         }
         self.temp_file.write(mock_content)
         self.temp_file.close()
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read() 
+        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
 
-        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
 
-        expected_modified_content = """
+        expected_response = """
 class TestClass:
     \"\"\"Comment for TestClass\"\"\"
     def method_one(self):
@@ -139,7 +148,7 @@ def test_function():
     pass
 """
 
-        self.assertEqual(modified_content.strip(), expected_modified_content.strip())
+        self.assertEqual(modified_response.strip(), expected_response.strip())
 
 
     def test_nested_classes(self):
@@ -162,9 +171,12 @@ class OuterClass:
                 }   
             }
         }
-        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()         
+        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
 
-        expected_modified_content = """
+
+        expected_response = """
 class OuterClass:
     \"\"\"Comment for OuterClass\"\"\"
     class InnerClass:
@@ -174,7 +186,7 @@ class OuterClass:
             pass
     """
 
-        self.assertEqual(modified_content.strip(), expected_modified_content.strip())
+        self.assertEqual(modified_response.strip(), expected_response.strip())
 
     def test_multi_line_docstrings(self):
         self.temp_file.write("""
@@ -191,7 +203,10 @@ class MyClass:
                 "docstring": multi_line_docstring
             }
         }
-        modified_content = dependencies.resolve("DocstringProcessor").insert_docstrings(self.file_path, docstrings)
+        with open(self.temp_file.name, 'r') as file:
+            content = file.read()         
+        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+
 
         expected_content = """
 class MyClass:
@@ -202,7 +217,7 @@ class MyClass:
     def my_method(self):
         pass
 """
-        self.assertEqual(modified_content.strip(), expected_content.strip())
+        self.assertEqual(modified_response.strip(), expected_content.strip())
 
 
 

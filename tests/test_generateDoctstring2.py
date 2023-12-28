@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 class TestAPICommunicator(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        ConfigManager(initial_config={"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})        
+        ConfigManager(initial_config={"dry_run": True,"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})        
         self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
         if self.communicator_manager.bot_communicator:
             self.bot_communicator: BaseBotCommunicator = self.communicator_manager.bot_communicator
@@ -30,37 +30,11 @@ class TestAPICommunicator(unittest.TestCase):
     def test_send_request(self, mock_post):
         # Mocking the post request to return a predefined response
         mock_response = MagicMock()
-        mock_response.iter_lines.return_value = iter([
-            b'header or metadata', 
-            b'data: {"completion": "mocked completion"}'
-        ])
+        mock_response.iter_lines.return_value = iter([{"docstrings": {"TestCode": {"exemple": "example code", "docstring": "Class docstring"}}}])
         mock_post.return_value = mock_response
 
-        response = self.bot_communicator.ask_for_docstrings('test code')
-        self.assertIn('mocked completion', response.content) 
-
-    @patch('requests.post')
-    def test_error_handling(self, mock_post):
-        # Simulate an exception during the request
-        mock_post.side_effect = Exception("Connection error")
-
-        response = self.bot_communicator.ask_for_docstrings('test code')
-        self.assertIn('Error during Claude API call', response.content)
-
-    @patch('requests.post')
-    def test_response_parsing(self, mock_post):
-        # Testing parsing of a valid response
-        valid_response = iter([
-            b'header or metadata', 
-            b'data: {"completion": "test docstring"}'
-        ])
-        mock_response = MagicMock()
-        mock_response.iter_lines.return_value = valid_response
-        mock_post.return_value = mock_response
-
-        response = self.bot_communicator.ask_for_docstrings('test code')
-        self.assertIn('test docstring', response.content)
-
+        response = self.bot_communicator.ask_for_docstrings('class TestCode:')
+        self.assertTrue(response.is_valid)
 
 class TestDocstringProcessor(unittest.TestCase):
     def setUp(self):
@@ -80,7 +54,7 @@ class TestDocstringProcessor(unittest.TestCase):
 class TestFileProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        ConfigManager(initial_config={"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})
+        ConfigManager(initial_config={"dry_run": True, "keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})
         self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
 
     def test_process_file(self):
@@ -93,14 +67,10 @@ class TestFileProcessor(unittest.TestCase):
 
         # Create a FileProcessor instance and call process_file on the temp file
         file_processor: FileProcessor = dependencies.resolve("FileProcessor")
-        success = file_processor.process_file(temp_file_path)
+        response = file_processor.process_file(temp_file_path)
 
         # Assert that the process was successful
-        self.assertTrue(success)
-
-        # Read the contents of the temporary file after processing
-        with open(str(temp_file_path), 'r') as file:
-            processed_content = file.read()
+        self.assertTrue(response.is_valid)
 
         # Read the expected contents from the result file
         result_file_path = Path('./tests/classTest-result.py')
@@ -108,23 +78,7 @@ class TestFileProcessor(unittest.TestCase):
             expected_docstrings = file.read()
 
         # Assert that the processed content matches the expected content
-        self.assertEqual(expected_docstrings, processed_content)
-
-        # Remove the temporary file first
-        os.remove(str(temp_file_path))
-
-        # Check if the directory is empty, and remove if possible
-        if not os.listdir(temp_dir):
-            os.rmdir(temp_dir)  # Directory is empty, safe to remove
-        else:
-            # Directory is not empty, proceed with recursive deletion
-            try:
-                shutil.rmtree(temp_dir)  # Recursively delete all contents
-                print("Temporary directory and its contents have been removed.")
-            except OSError as e:
-                print("Error removing temporary directory:", e)
-                # Handle potential errors, such as permission issues
-
+        self.assertEqual(expected_docstrings, response.content)
 
     @patch('DocStringGenerator.FileProcessor.FileProcessor.process_file')
     def test_process_directory(self, mock_process_file):

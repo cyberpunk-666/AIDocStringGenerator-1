@@ -210,9 +210,18 @@ class FileProcessor:
                     break
 
         process_examples_response = self.process_examples(source_code, response_docstrings)
+        if ConfigManager().config.get('dry_run', False):
+            return process_examples_response
+        self.write_new_code(file_path, process_examples_response)
         return process_examples_response
 
-    
+        
+    def write_new_code(self, file_path, process_examples_response):
+        if process_examples_response.is_valid:
+            with open(file_path, 'w') as file:
+                file.write(process_examples_response.content)
+            self.log_processed_file(file_path)
+
     def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:
         if response_docstrings.is_valid:
             parsed_examples = self.parse_examples_from_response(response_docstrings.content)

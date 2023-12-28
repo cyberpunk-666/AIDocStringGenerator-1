@@ -2,6 +2,7 @@ import unittest
 import os
 import sys
 import tempfile
+from urllib import response
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
@@ -42,21 +43,21 @@ class TestClass:
     def test_append_function_success(self):
         examples = {"TestClass": "print('Hello, World!')"}
         config = {"verbose": False}
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertTrue(success)
+        # load file from self.file_path
+        code_source = Path(self.file_path).read_text()
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertTrue(response.is_valid)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
-        lines = content.splitlines()
+        lines = response.content.splitlines()
         self.assertIn("def example_function_TestClass(self):", lines[5])
         self.assertIn("print('Hello, World!')", lines[6])
 
     def test_append_function_nonexistent_class(self):
         examples = {"NonExistentClass": "print('This should not work')"}
         config = {"verbose": False}
-        success, failed_class_names = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertFalse(success)
-        self.assertIn("NonExistentClass", failed_class_names)    
+        response = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
+        self.assertFalse(response.is_valid)
+        self.assertIn("NonExistentClass", response.content)    
 
     def test_append_multiple_classes(self):
         # Add content for multiple classes to the temp file
@@ -71,24 +72,22 @@ class AnotherTestClass:
             "TestClass": "print('Hello from TestClass')",
             "AnotherTestClass": "print('Hello from AnotherTestClass')"
         }
-        config = {"verbose": False}        
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertTrue(success)
+        config = {"verbose": False}   
+        code_source = Path(self.file_path).read_text()     
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertTrue(response.is_valid)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
-        lines = content.splitlines()
-        self.assertIn("def example_function_TestClass(self):", content)
-        self.assertIn("def example_function_AnotherTestClass(self):", content)
+        self.assertIn("def example_function_TestClass(self):", response.content)
+        self.assertIn("def example_function_AnotherTestClass(self):", response.content)
 
     def test_append_complex_code_snippet(self):
         examples = {"TestClass": "for i in range(5):\n    print(i)"}
         config = {"verbose": False}
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertTrue(success)
+        code_source = Path(self.file_path).read_text() 
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertTrue(response.is_valid)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
+        content= response.content
         self.assertIn("for i in range(5):", content)
         self.assertIn("print(i)", content)
 
@@ -96,12 +95,11 @@ class AnotherTestClass:
     def test_invalid_python_code(self):
         examples = {"TestClass": "if True print('Missing colon')"}
         config = {"verbose": False}
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertFalse(success)
+        code_source = Path(self.file_path).read_text()
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertFalse(response.is_valid)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
-        self.assertNotIn("if True print('Missing colon')", content)
+        self.assertNotIn("if True print('Missing colon')", response.content)
 
     def test_different_indentation_levels(self):
         # Adding a nested class to the test file
@@ -115,13 +113,13 @@ class OuterClass:
 
         examples = {"InnerClass": "print('Hello from InnerClass')"}
         config = {"verbose": False}
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertTrue(success)
+        code_source = Path(self.file_path).read_text()
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertTrue(response.is_valid)
 
-        with open(self.file_path, 'r') as file:
-            content = file.read()
-        self.assertIn("def example_function_InnerClass(self):", content)
-        self.assertIn("print('Hello from InnerClass')", content)
+
+        self.assertIn("def example_function_InnerClass(self):", response.content)
+        self.assertIn("print('Hello from InnerClass')", response.content)
 
     def test_empty_file(self):
         # Overwrite the file with an empty content
@@ -130,9 +128,10 @@ class OuterClass:
 
         examples = {"TestClass": "print('Hello from TestClass')"}
         config = {"verbose": False}
-        success, failed_class_names = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertFalse(success)
-        self.assertIn("TestClass", failed_class_names)
+        code_source = Path(self.file_path).read_text()
+        response= self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertFalse(response.is_valid)
+        self.assertIn("TestClass", response.content)
 
     def test_append_multiline_function(self):
         # Define a multi-line function example
@@ -141,16 +140,13 @@ class OuterClass:
         config = {"verbose": False}
 
         # Append the multi-line function to TestClass
-        success, _ = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
-        self.assertTrue(success)
-
-        # Read and check the modified file content
-        with open(self.file_path, 'r') as file:
-            content = file.read()
+        code_source = Path(self.file_path).read_text()
+        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertTrue(response.is_valid)
 
         # Check for specific lines in the multi-line function
-        self.assertIn("def example_function_TestClass(self):", content)
-        self.assertIn("for i in range(3):", content)
-        self.assertIn("print(f\"Line {i}\")", content)
-        self.assertIn("print(\"End of multi-line example\")", content)        
+        self.assertIn("def example_function_TestClass(self):", response.content)
+        self.assertIn("for i in range(3):", response.content)
+        self.assertIn("print(f\"Line {i}\")", response.content)
+        self.assertIn("print(\"End of multi-line example\")", response.content)        
 
