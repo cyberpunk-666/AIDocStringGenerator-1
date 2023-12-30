@@ -29,6 +29,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         json_response = response.content
         # Assert response is not None or empty
         self.assertIsNotNone(json_response)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         # Further assertions to check the response format, content, etc.
@@ -37,6 +38,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         # Test parsing the response into the desired JSON format
         sample_response = '{"docstrings": {"MyClass": {"docstring": "Description"}}}'
         response = self.file_processor.try_generate_docstrings(sample_response)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         self.assertIn("MyClass", str(response.content))
 
@@ -48,6 +50,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         sample_code = "class MyClass:\n    def my_method(self):\n        pass"
         response = self.communicator_manager.send_code_in_parts(sample_code)
 
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         self.assertNotEqual(response.content, "")
 
@@ -57,6 +60,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         #docstrings = response_data.get('docstrings', {})
         response = dependencies.resolve("DocstringProcessor").extract_docstrings(response.content)
 
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         for class_name, class_info in response.content.items():
@@ -79,6 +83,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         # Test if the response complies with the specified JSON format
         sample_code = "class MyClass:\n    def my_method(self):\n        pass"
         response = self.file_processor.try_generate_docstrings(sample_code)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
     def test_method_docstrings_inclusion(self):
@@ -86,6 +91,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         sample_code = "class MyClass:\n    def my_method(self):\n        pass"
         response = self.file_processor.try_generate_docstrings(sample_code)
         
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         self.assertIn("my_method", response.content["MyClass"]["methods"])
 

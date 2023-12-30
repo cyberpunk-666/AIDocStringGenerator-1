@@ -56,7 +56,8 @@ class BaseBotCommunicator:
 
     def ask_retry_examples(self, class_name)-> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_retry_example')
-        replacements = {'class_name': class_name}
+        replacements = {'class_name': class_name,
+                                        "example_retry": True}
         return self.ask(prompt_template, replacements)
         
     def ask_for_docstrings(self, source_code, retry_count=1) -> APIResponse:
@@ -240,8 +241,12 @@ class FileCommunicator(BaseBotCommunicator):
         # Handling file-based responses
         working_directory = os.getcwd()
         response_index = replacements.get('retry_count', "")
+        example_retry = replacements.get('example_retry', False)
         base_bot_file = self.config.get('model', "")
-        bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
+        if not example_retry:
+            bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
+        else:
+            bot_file = f"{base_bot_file}.example.json"
         try:
             # Check if it's a path or just a filename
             if not os.path.isabs(base_bot_file):                
@@ -253,17 +258,25 @@ class FileCommunicator(BaseBotCommunicator):
             return APIResponse("", False, str(e))
         return APIResponse(response_text, True)
     
+
+class EmptyCommunicator(BaseBotCommunicator):
+    def __init__(self):
+        self.config = ConfigManager().config
+        super().__init__()
+
+    def ask(self, prompt, replacements) -> APIResponse:
+        return APIResponse("Ok", True)
+
 class CommunicatorManager:
     def __init__(self):
         #DependencyContainer().resolve('CommunicatorManager').bot_communicator
         self.config = ConfigManager().config
-        self.bot_communicator:Optional[BaseBotCommunicator] = self.initialize_bot_communicator()
- 
-    def initialize_bot_communicator(self) -> Optional[BaseBotCommunicator]:
+        self.initialize_bot_communicator()
+        self.bot_communicator = EmptyCommunicator()
+
+    def initialize_bot_communicator(self):
         if not 'bot' in self.config:
-            if self.config.get('verbose', ""):
-                print("No bot specified in the configuration. Aborting.")
-            return None
+            return
         bot = self.config.get('bot', "")
         if not bot in BOTS:
             raise ValueError(f"Unsupported bot type '{bot}' specified in the configuration")
@@ -273,12 +286,11 @@ class CommunicatorManager:
         dependencies.register('bard_Communicator', BardCommunicator)
         dependencies.register('file_Communicator', FileCommunicator)        
 
-        bot_communicator_class = dependencies.resolve(f"{bot}_Communicator")
-        if not bot_communicator_class:
-            raise ValueError(f"Unsupported bot type '{self.config.get('bot', "")}' specified in the configuration")
-        return bot_communicator_class       
+        self.bot_communicator = dependencies.resolve(f"{bot}_Communicator")
+        if not self.bot_communicator:
+            raise ValueError(f"Error initializing bot communicator for '{bot}'")
 
-    def send_code_in_parts(self, source_code, retry_count) -> APIResponse:
+    def send_code_in_parts(self, source_code, retry_count=1) -> APIResponse:
         from DocStringGenerator.FileProcessor import FileProcessor
         
         def attempt_send(code, iteration=0) -> APIResponse:

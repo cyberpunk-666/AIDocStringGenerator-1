@@ -24,11 +24,15 @@ class FileMock:
 
 class TestAIDocStringGenerator(unittest.TestCase):
     def setUp(self):
-        self.config = ConfigManager(initial_config= {"bot":"file","model":"classTest"}).config
+        ConfigManager().update_config({"bot":"file","model":"classTest"})
+        self.config = ConfigManager().config
+        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.communicator_manager.initialize_bot_communicator()        
         # Prepare mock responses for different retry attempts
         file_content_map = {
             "classTest.response.json": 'Invalid Response',
-            "classTest.response2.json": '{"docstrings": {"classTest":{"docstring":"This is a class"}}}',  # Simulate a valid JSON response
+            "classTest.response2.json": '{"docstrings": {"classTest":{"example":"Bad Code","docstring":"This is a class"}}}', 
+            "classTest.example.json": '{"docstrings": {"classTest":{"example":"print(\'Hello, world!\')"}}}', 
             ".ENV":""
             # Add more mock responses as needed
         }
@@ -41,10 +45,10 @@ class TestAIDocStringGenerator(unittest.TestCase):
             file_processor = FileProcessor()
             response = file_processor.process_code("class classTest:\n    def test_method(self):\n        pass")
             # Assert that the correct file was read on the second attempt
-            if mock_file:
-                self.assertEqual(mock_file.filename,"classTest.response2.json")
+            self.assertEqual(response.error_message, "")
             self.assertTrue(response.is_valid)
             self.assertIn ('This is a class', response.content)
+            self.assertIn ('Hello, world!', response.content)
 
 
 if __name__ == '__main__':

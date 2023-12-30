@@ -96,6 +96,7 @@ Ensure the response follows the specified format and reflects the appropriate le
 
     def test_extract_docstrings(self):
         response = self.docstring_processor.extract_docstrings([TestDocstringProcessor.response])
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
     def test_merge_json_objects(self):
@@ -130,6 +131,7 @@ class TestExtractDocstrings(unittest.TestCase):
 """]
         config = {"verbose": False}
         response = self.docstring_processor.extract_docstrings(responses)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         assert isinstance(response.content, dict)
         assert response.content == {'MyClass': {'docstring': 'A basic placeholder class for demonstration purposes.', 'example': 'my_object = MyClass()\nmy_object.my_method()', 'methods': {'my_method': 'A placeholder method that does nothing.'}}}
@@ -137,6 +139,7 @@ class TestExtractDocstrings(unittest.TestCase):
     def test_extract_docstrings_valid(self):
         responses = ['{"docstrings": {"class1":{"docstring":""}}}']
         response = self.docstring_processor.extract_docstrings(responses)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         self.assertEqual(response.content, {'class1': {'docstring': ''}})
 

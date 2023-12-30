@@ -1,8 +1,8 @@
-Some text
+Here is your code:
 {
     "docstrings": {
         "Test": {
-            "example": "result = test()\nprint(result)",
+            "example": "Bad Code",
             "docstring": "Class to contain test functions.",
             "methods": {
                 "func1": "Adds two numbers together.",
@@ -12,4 +12,4 @@ Some text
         }
     }
 }
-More text
+Note: I have used the json module to format the output. You can use the pprint module instead if you want to print the output in a more readable format.

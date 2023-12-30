@@ -1,3 +1,4 @@
+from math import e
 import os
 import io
 from pathlib import Path
@@ -30,7 +31,6 @@ class FileProcessor:
         if not hasattr(self, '_initialized'):  # Prevent reinitialization
             self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
             self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
-            self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
             self.config: dict[str, str]  = ConfigManager().config
             self._initialized = True
 
@@ -239,29 +239,33 @@ class FileProcessor:
 
     def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:
         if response_docstrings.is_valid:
-            parsed_examples = self.parse_examples_from_response(response_docstrings.content)
+            parsed_examples = self.parse_examples_from_docstrings(response_docstrings.content)
             if parsed_examples.is_valid:
                 add_example_response = self.add_example_functions_to_classes(source_code, parsed_examples.content)
-            else:
-                return parsed_examples
 
-            if add_example_response.is_valid:
-                return APIResponse(add_example_response.content, True)
-            else:
-                failed_function_names = add_example_response.content
-                retry_examples_response = self.ask_retry_examples(failed_function_names)
-
-                if retry_examples_response.is_valid:
-                    new_parsed_examples = self.parse_examples_from_response(retry_examples_response.content)
-                    add_example_response = self.add_example_functions_to_classes(source_code, new_parsed_examples.content)
-                    if add_example_response.is_valid:                    
-                        return add_example_response
+                if add_example_response.is_valid:
+                    return APIResponse(add_example_response.content, True)
                 else:
-                    return retry_examples_response
+                    failed_function_names = add_example_response.content
+                    retry_examples_response = self.ask_retry_examples(failed_function_names)
 
-            return APIResponse(source_code, True)
-
-        return APIResponse("", False)    
+                    if retry_examples_response.is_valid:
+                        extract_docstrings_response: APIResponse = self.docstring_processor.extract_docstrings(retry_examples_response.content, True)
+                        if extract_docstrings_response.is_valid:
+                            new_parsed_examples = self.parse_examples_from_docstrings(extract_docstrings_response.content)
+                            if new_parsed_examples.is_valid:
+                                add_example_response = self.add_example_functions_to_classes(source_code, new_parsed_examples.content)                   
+                                return add_example_response
+                            else:
+                                return new_parsed_examples
+                        else:
+                            return extract_docstrings_response
+                    else:
+                        return retry_examples_response
+            else:
+                return parsed_examples                    
+        else:
+            return response_docstrings
          
     def ask_retry_examples(self, failed_function_names) -> APIResponse:
         """
@@ -269,12 +273,12 @@ class FileProcessor:
         :param failed_function_names: List of function names for which examples failed to generate.
         :return: APIResponse object with the result of the retry attempt.
         """
-
-        if not self.bot_communicator:
+        bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
+        if not bot_communicator:
             return APIResponse("", False, "Bot communicator not available.")
 
         # Request the bot communicator to retry generating examples for the failed functions
-        retry_response = self.bot_communicator.ask_retry_examples(failed_function_names)
+        retry_response = bot_communicator.ask_retry_examples(failed_function_names)
 
         if not retry_response.is_valid:
             return APIResponse("", False, "Failed to retrieve new examples.")
@@ -283,8 +287,9 @@ class FileProcessor:
 
     def try_generate_docstrings(self, source_code, retry_count=1, last_error_message="") -> APIResponse:
         """Attempts to generate docstrings, retrying if necessary."""
-        if not self.bot_communicator:
-            return APIResponse("", False)
+        bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator        
+        if not bot_communicator:
+            return APIResponse("", False, "Bot communicator not initialized.")
 
         if retry_count == 1:
             result = self.communicator_manager.send_code_in_parts(source_code, retry_count)
@@ -333,7 +338,7 @@ class FileProcessor:
         """Lists all files in a directory with a given file extension."""
         return [f for f in directory.iterdir() if f.suffix == extension]  
     
-    def parse_examples_from_response(self, docstrings: dict) -> APIResponse:
+    def parse_examples_from_docstrings(self, docstrings: dict) -> APIResponse:
         parsed_examples = {}
         try:
             for class_or_func_name, content in docstrings.items():

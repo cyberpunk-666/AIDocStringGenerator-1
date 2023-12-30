@@ -15,6 +15,10 @@ class ConfigManager:
             cls._instance = super(ConfigManager, cls).__new__(cls)
         return cls._instance
 
+    def update_config(self, new_config: dict[str, Any]) -> None:
+        """Update the configuration with values from the provided dictionary."""
+        self.config.update(new_config)
+
     def set_config(self, key, value):
         """Set a configuration value."""
         self.config[key] = value

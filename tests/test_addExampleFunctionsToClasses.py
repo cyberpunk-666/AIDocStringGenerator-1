@@ -46,6 +46,7 @@ class TestClass:
         # load file from self.file_path
         code_source = Path(self.file_path).read_text()
         response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         lines = response.content.splitlines()
@@ -75,6 +76,7 @@ class AnotherTestClass:
         config = {"verbose": False}   
         code_source = Path(self.file_path).read_text()     
         response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         self.assertIn("def example_function_TestClass(self):", response.content)
@@ -85,6 +87,7 @@ class AnotherTestClass:
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text() 
         response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         content= response.content
@@ -115,6 +118,7 @@ class OuterClass:
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text()
         response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
 
@@ -142,6 +146,7 @@ class OuterClass:
         # Append the multi-line function to TestClass
         code_source = Path(self.file_path).read_text()
         response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
         # Check for specific lines in the multi-line function

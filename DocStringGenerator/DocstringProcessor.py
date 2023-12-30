@@ -100,7 +100,7 @@ class DocstringProcessor:
         return '\n'.join(formatted_docstring)
 
             
-    def validate_response(self, json_object) -> APIResponse:
+    def validate_response(self, json_object, example_only = False) -> APIResponse:
         try:
             if self.config.get('verbose', ""):
                 print("Validating docstrings...")
@@ -109,17 +109,18 @@ class DocstringProcessor:
             docstrings = json_object.get("docstrings", {})
             if not isinstance(docstrings, dict):
                 return APIResponse(json_object, False, "Invalid format: 'docstrings' should be a dictionary.")
-
-            # Validate each class and global functions
-            for key, value in docstrings.items():
-                if key == "global_functions":
-                    if not isinstance(value, dict):
-                        return APIResponse(json_object, False, f"Invalid format: Global functions under '{key}' should be a dictionary.")
-                else:
-                    if not isinstance(value, dict) or "docstring" not in value:
-                        return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
-                    if "methods" in value and not isinstance(value["methods"], dict):
-                        return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
+            
+            if not example_only:
+                # Validate each class and global functions
+                for key, value in docstrings.items():
+                    if key == "global_functions":
+                        if not isinstance(value, dict):
+                            return APIResponse(json_object, False, f"Invalid format: Global functions under '{key}' should be a dictionary.")
+                    else:
+                        if not isinstance(value, dict) or "docstring" not in value:
+                            return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
+                        if "methods" in value and not isinstance(value["methods"], dict):
+                            return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
 
             if self.config.get('verbose', ""):
                 print("Validating examples...")
@@ -158,7 +159,7 @@ class DocstringProcessor:
 
         return merged_data
 
-    def extract_docstrings(self, responses) -> APIResponse:
+    def extract_docstrings(self, responses, example_only = False) -> APIResponse:
         # Merge responses before validity check
         json_responses = []
         if isinstance(responses, list):
@@ -180,7 +181,7 @@ class DocstringProcessor:
         merged_response = self.merge_json_objects(json_responses)
 
         # Check the validity of the merged response
-        response = self.validate_response(merged_response)
+        response = self.validate_response(merged_response, example_only)
         if not response.is_valid:
             return response           
 
