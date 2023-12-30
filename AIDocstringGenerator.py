@@ -47,7 +47,12 @@ def main():
             config[arg] = value        
 
     file_processor = dependencies.resolve("FileProcessor")
-    file_processor.process_folder_or_file()
+    response = file_processor.process_folder_or_file()
+    if not response.is_valid:
+        failed_files = response.content
+        for file in failed_files:
+            print(f"Failed to process {file.file_name}")
+            print(f"Error message: {file.response}")
 
 if __name__ == '__main__':
     main()

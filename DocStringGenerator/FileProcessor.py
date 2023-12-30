@@ -145,43 +145,41 @@ class FileProcessor:
         except FileNotFoundError:
             return False
 
-    def process_folder_or_file(self):
-            path = Path(self.config.get('path', ""))
-            include_subfolders = self.config.get('include_subfolders', False)
-            ignore_list = set(self.config.get('ignore', []))  # Convert ignore list to a set for faster lookup
+    def process_folder_or_file(self) -> APIResponse:
+        path = Path(self.config.get('path', ""))
+        include_subfolders = self.config.get('include_subfolders', False)
+        ignore_list = set(self.config.get('ignore', []))  # Convert ignore list to a set for faster lookup
 
-            if os.path.isdir(path):
-                for root, dirs, files in os.walk(path):
-                    if not include_subfolders and root != str(path):
+        failed_files = []
+        if os.path.isdir(path):
+            for root, dirs, files in os.walk(path):
+                if not include_subfolders and root != str(path):
+                    continue
+
+                # Filter out ignored directories
+                dirs[:] = [d for d in dirs if d not in ignore_list]
+
+                for file in files:
+                    # Check if the file is in the ignore list
+                    if file in ignore_list:
                         continue
 
-                    # Filter out ignored directories
-                    dirs[:] = [d for d in dirs if d not in ignore_list]
+                    full_file_path = Path(root, file)
+                    if file.endswith('.py'):
+                        response = self.process_file(full_file_path.absolute())
+                        if not response.is_valid:
+                            failed_files.append({"file_name":full_file_path.name, "response":response})
+                            print(f'Failed to process {str(full_file_path)}')
 
-                    for file in files:
-                        # Check if the file is in the ignore list
-                        if file in ignore_list:
-                            continue
+        elif os.path.isfile(path) and str(path).endswith('.py'):
+            if path.name not in ignore_list:
+                success = self.process_file(path.absolute())
+                if not success:
+                    failed_files.append(str(path))
+        else:
+            return APIResponse([], False, 'Invalid path or file type. Please provide a Python file or directory.')
 
-                        full_file_path = Path(root, file)
-                        if file.endswith('.py'):
-                            if self.config.get('wipe_docstrings', False):
-                                self.wipe_docstrings(full_file_path)
-                            
-                            success = self.process_file(full_file_path.absolute())
-                            if not success:
-                                print(f'Failed to process {str(full_file_path.absolute())}')
-                                    
-            elif os.path.isfile(path) and str(path).endswith('.py'):
-                if self.config.get('wipe_docstrings', False):
-                    self.wipe_docstrings(path)
-
-                if path.name not in ignore_list:
-                    success = self.process_file(path.absolute())
-                    if not success:
-                        print(f'Failed to process {path}')
-            else:
-                print('Invalid path or file type. Please provide a Python file or directory.')
+        return APIResponse(failed_files, not failed_files, "" if not failed_files else "Some files failed to process.")
 
     
 
@@ -207,7 +205,13 @@ class FileProcessor:
         
     def process_code(self, source_code) -> APIResponse:
         ask_count = 0
-    
+        if self.config.get('wipe_docstrings', False):
+            wipe_docstrings_response = self.wipe_docstrings(source_code)
+            if wipe_docstrings_response.is_valid:
+                source_code = wipe_docstrings_response.content
+            else:
+                return wipe_docstrings_response
+
         last_error_message = ""
         while True:
             ask_count += 1
@@ -319,20 +323,20 @@ class FileProcessor:
             json.dump(docstrings, f, indent=4)
 
 
-    def wipe_docstrings(self, file_path: Path):
+
+    def wipe_docstrings(self, source) -> APIResponse:
         """Removes all docstrings from a Python source file."""
-        source = file_path.read_text()
 
         try:
             tree = ast.parse(source)
-        except SyntaxError:
-            print(f"Failed parsing {file_path}")
-            return
+        except SyntaxError as e:
+            return APIResponse("", False, f"Invalid Python code: {e}")
+            
 
         tree = DocstringRemover().visit(tree)
         new_source = ast.unparse(tree)
 
-        file_path.write_text(new_source)
+        return APIResponse(new_source, True)
 
     def list_files(self, directory: Path, extension: str) -> List[Path]:
         """Lists all files in a directory with a given file extension."""
