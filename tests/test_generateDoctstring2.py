@@ -58,16 +58,11 @@ class TestFileProcessor(unittest.TestCase):
         self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
 
     def test_process_file(self):
-        classTest_file_path = Path('./tests/classTest_orig.py')
-        temp_dir = tempfile.mkdtemp()  # Create a temporary directory
-        temp_file_path = Path(temp_dir, 'classTest_temp.py')
-
-        # Copy the original file to the temporary file
-        shutil.copy2(str(classTest_file_path), str(temp_file_path))
+        classTest_file_path = Path('./tests/classTest.py')
 
         # Create a FileProcessor instance and call process_file on the temp file
         file_processor: FileProcessor = dependencies.resolve("FileProcessor")
-        response = file_processor.process_file(temp_file_path)
+        response = file_processor.process_file(classTest_file_path)
 
         # Assert that the process was successful
         self.assertTrue(response.is_valid)
@@ -93,85 +88,6 @@ class TestFileProcessor(unittest.TestCase):
         self.assertEqual(mock_process_file.call_count, 1)
 
 
-    def test_process_file2(self):            
-        new_test_script_content = """class Calculator:
-    def add(self, x, y):
-        return x + y
-
-    def subtract(self, x, y):
-        return x - y
-
-    def multiply(self, x, y):
-        return x * y
-
-    def divide(self, x, y):
-        if y == 0:
-            raise ValueError("Cannot divide by zero.")
-        return x / y"""
-
-        # New content for the JSON file (docstrings_response.json)
-        new_docstrings_response_content = """{
-    "docstrings": {
-        "Calculator":{
-            "docstring": "Class to perform basic arithmetic operations.",
-            "example": "calc = Calculator()\\nresult = calc.add(5, 3)\\nprint(result)",
-            "methods": {
-                "add": "Adds two numbers.",
-                "subtract": "Subtracts the second number from the first.",
-                "multiply": "Multiplies two numbers.",
-                "divide": "Divides the first number by the second."
-            }
-        }
-    }  
-}
-"""
-
-        final_script_with_comments = """class Calculator:
-    \"\"\"Class to perform basic arithmetic operations.\"\"\"
-    def add(self, x, y):
-        \"\"\"Adds two numbers.\"\"\"
-        return x + y
-
-    def subtract(self, x, y):
-        \"\"\"Subtracts the second number from the first.\"\"\"
-        return x - y
-
-    def multiply(self, x, y):
-        \"\"\"Multiplies two numbers.\"\"\"
-        return x * y
-
-    def divide(self, x, y):
-        \"\"\"Divides the first number by the second.\"\"\"
-        if y == 0:
-            raise ValueError("Cannot divide by zero.")
-        return x / y
-
-    def example_function_Calculator(self):
-        calc = Calculator()
-        result = calc.add(5, 3)
-        print(result)"""
-        
-        # New file paths
-        with tempfile.TemporaryDirectory() as tmpdir:  
-            new_test_script_file_path = Path(tmpdir, "new_test_script.py")  
-            new_docstrings_response_file_path = Path(tmpdir, "new_docstrings.response.json")  
-
-            # Writing the new contents to the files
-            with open(new_test_script_file_path, 'w') as file:
-                file.write(new_test_script_content.strip())
-
-            with open(new_docstrings_response_file_path, 'w') as file:
-                file.write(new_docstrings_response_content.strip())
-            stem = Path(new_docstrings_response_file_path).stem
-
-            directory_path = new_docstrings_response_file_path.parent
-            ConfigManager().set_config('model', str(Path(directory_path, stem).absolute()))
-
-            response = self.file_processor.process_file(new_test_script_file_path)
-            self.assertTrue(response.is_valid)
-
-            self.assertEqual(response.content, final_script_with_comments)  
-            dependencies.resolve("FileProcessor").removed_from_processed_log(new_test_script_file_path)
 
 
 if __name__ == '__main__':

@@ -48,22 +48,25 @@ class BaseBotCommunicator:
             prompt_template = prompt_template.replace(f'{{{key}}}', value)
         return prompt_template
     
-    def ask_retry(self):
+    def ask_retry(self, last_error_message, retry_count) -> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_retry')
-        return self.ask(prompt_template, {})
+        replacements = {'last_error_message': last_error_message,
+                                        "retry_count": retry_count}        
+        return self.ask(prompt_template, replacements)
 
     def ask_retry_examples(self, class_name)-> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_retry_example')
         replacements = {'class_name': class_name}
         return self.ask(prompt_template, replacements)
         
-    def ask_for_docstrings(self, source_code) -> APIResponse:
+    def ask_for_docstrings(self, source_code, retry_count=1) -> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_docStrings')
         replacements = {'source_code': source_code,
                         'max_line_length': str(self.config.get('max_line_length', 79)),
                         "class_docstrings_verbosity_level": str(self.config.get("class_docstrings_verbosity_level",5)),
                         "function_docstrings_verbosity_level": str(self.config.get("function_docstrings_verbosity_level",2)),
-                        "example_verbosity_level": str(self.config.get("example_verbosity_level",3))}
+                        "example_verbosity_level": str(self.config.get("example_verbosity_level",3)),
+                        "retry_count": retry_count}
                 
         return self.ask(prompt_template, replacements)    
 
@@ -236,22 +239,19 @@ class FileCommunicator(BaseBotCommunicator):
     def ask(self, prompt, replacements) -> APIResponse:
         # Handling file-based responses
         working_directory = os.getcwd()
+        response_index = replacements.get('retry_count', "")
         base_bot_file = self.config.get('model', "")
+        bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
         try:
             # Check if it's a path or just a filename
-            if not os.path.isabs(base_bot_file):
-                base_bot_file = os.path.join(working_directory, f"responses/{base_bot_file}")
+            if not os.path.isabs(base_bot_file):                
+                bot_file = os.path.join(working_directory, f"responses/{bot_file}")
 
-            # Remove file extension if present
-            base_bot_file, _ = os.path.splitext(base_bot_file)
-            responses = []
-            bot_file = f"{base_bot_file}.response.json"
             with open(bot_file, 'r') as f:
                 response_text = f.read()  # Read the raw string content
-                responses.append(response_text)
         except Exception as e:
             return APIResponse("", False, str(e))
-        return APIResponse(responses, True)
+        return APIResponse(response_text, True)
     
 class CommunicatorManager:
     def __init__(self):
@@ -264,12 +264,21 @@ class CommunicatorManager:
             if self.config.get('verbose', ""):
                 print("No bot specified in the configuration. Aborting.")
             return None
-        bot_communicator_class = dependencies.resolve(f"{self.config.get('bot', "")}_Communicator")
+        bot = self.config.get('bot', "")
+        if not bot in BOTS:
+            raise ValueError(f"Unsupported bot type '{bot}' specified in the configuration")
+
+        dependencies.register('claude_Communicator', ClaudeCommunicator)
+        dependencies.register('openai_Communicator', OpenAICommunicator)
+        dependencies.register('bard_Communicator', BardCommunicator)
+        dependencies.register('file_Communicator', FileCommunicator)        
+
+        bot_communicator_class = dependencies.resolve(f"{bot}_Communicator")
         if not bot_communicator_class:
             raise ValueError(f"Unsupported bot type '{self.config.get('bot', "")}' specified in the configuration")
         return bot_communicator_class       
 
-    def send_code_in_parts(self, source_code) -> APIResponse:
+    def send_code_in_parts(self, source_code, retry_count) -> APIResponse:
         from DocStringGenerator.FileProcessor import FileProcessor
         
         def attempt_send(code, iteration=0) -> APIResponse:
@@ -282,7 +291,7 @@ class CommunicatorManager:
             for part in parts:
                 print(f'Sending part {parts.index(part) + 1} of {len(parts)}')
                 if self.bot_communicator is not None:
-                    response = self.bot_communicator.ask_for_docstrings(part)                
+                    response = self.bot_communicator.ask_for_docstrings(part, retry_count)                
                 if response:
                     if response.is_valid:
                         content = response.content
@@ -292,12 +301,11 @@ class CommunicatorManager:
                         responses.append(content)
                     else:
                         return response
-            aggregated_content = ' '.join(responses)  # Adjust as needed for correct formatting
-            return APIResponse(aggregated_content, True)        
+            return APIResponse(responses, True)        
         return attempt_send(source_code)
 
 
-    def handle_file_based_responses(self):
+    def handle_file_based_responses(self, response_index):
         responses = []
         working_directory = os.getcwd()
         base_bot_file = self.config.get('model', "")
@@ -309,11 +317,10 @@ class CommunicatorManager:
 
         counter = 1
         try:
-            bot_file = f"{base_bot_file}.response.json"
-            while os.path.exists(bot_file):
-                with open(bot_file, 'r') as f:
-                    response_text = f.read()
-                    responses.append(response_text)
+            bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
+            with open(bot_file, 'r') as f:
+                response_text = f.read()
+                responses.append(response_text)
 
                 counter += 1
                 bot_file = f"{base_bot_file}.response{counter}.json"
@@ -325,7 +332,3 @@ class CommunicatorManager:
 
 dependencies = DependencyContainer()
 dependencies.register('CommunicatorManager', CommunicatorManager)
-dependencies.register('claude_Communicator', ClaudeCommunicator)
-dependencies.register('openai_Communicator', OpenAICommunicator)
-dependencies.register('bard_Communicator', BardCommunicator)
-dependencies.register('file_Communicator', FileCommunicator)

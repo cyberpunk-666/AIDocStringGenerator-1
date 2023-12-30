@@ -66,7 +66,7 @@ class Utility:
         return APIResponse(found_json_string, is_valid, error_message)
 
     @staticmethod
-    def parse_json(text):
+    def parse_json(text) -> APIResponse:
         """
         Tries to parse a JSON string from given text input. Handles
         errors and returns tuple with parsed object or None, 
@@ -80,16 +80,15 @@ class Utility:
             
             response = Utility.extract_json(text)
             json_string = response.content
-            if is_valid:
+            if response.is_valid:
                 json_object = json.loads(json_string)
+                return APIResponse(json_object, True)
             else:
-                print(f'Invalid JSON: {error_message}')
-                is_valid = False
+                return APIResponse(None, False, response.error_message)
         except json.JSONDecodeError as e:
             error_message = str(e)
-            print(f'Invalid JSON: {json_string}\nError: {e}')
-            is_valid = False
-        return (json_object, is_valid, error_message)
+            return APIResponse(None, False, error_message)
+        
 
     @staticmethod
     def read_config(config_path: Path) -> dict:

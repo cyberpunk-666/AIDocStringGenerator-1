@@ -1,1 +1,3 @@
-Sorry, your previous response was not in the correct format. Please try again.
+Sorry, your previous response was not in the correct format.
+Here is the last error message: "{last_error_message}"
+Please try again.

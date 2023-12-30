@@ -100,57 +100,38 @@ class DocstringProcessor:
         return '\n'.join(formatted_docstring)
 
             
-    def validate_response(self, json_object):
+    def validate_response(self, json_object) -> APIResponse:
         try:
-
             if self.config.get('verbose', ""):
                 print("Validating docstrings...")
 
             # Validate docstrings
             docstrings = json_object.get("docstrings", {})
             if not isinstance(docstrings, dict):
-                if self.config.get('verbose', ""):
-                    print("Invalid format: 'docstrings' should be a dictionary.")
-                return False
+                return APIResponse(json_object, False, "Invalid format: 'docstrings' should be a dictionary.")
 
             # Validate each class and global functions
             for key, value in docstrings.items():
                 if key == "global_functions":
                     if not isinstance(value, dict):
-                        if self.config.get('verbose', ""):
-                            print(f"Invalid format: Global functions under '{key}' should be a dictionary.")
-                        return False
+                        return APIResponse(json_object, False, f"Invalid format: Global functions under '{key}' should be a dictionary.")
                 else:
                     if not isinstance(value, dict) or "docstring" not in value:
-                        if self.config.get('verbose', ""):
-                            print(f"Invalid format: Class '{key}' should contain a 'docstring'.")
-                        return False
+                        return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
                     if "methods" in value and not isinstance(value["methods"], dict):
-                        if self.config.get('verbose', ""):
-                            print(f"Invalid format: Methods under class '{key}' should be a dictionary.")
-                        return False
+                        return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
 
             if self.config.get('verbose', ""):
                 print("Validating examples...")
 
             # Validate examples
             if "examples" in json_object and not isinstance(json_object["examples"], dict):
-                if self.config.get('verbose', ""):
-                    print("Invalid format: 'examples' should be a dictionary.")
-                return False
+                return APIResponse(json_object, False, "Invalid format: 'examples' should be a dictionary.")
 
-            if self.config.get('verbose', ""):
-                print(f"Validation successful for response: {json_object}")
+        except json.JSONDecodeError as e:
+            return APIResponse(json_object, False, f"JSON decoding error encountered. {e}")
 
-        except json.JSONDecodeError:
-            if self.config.get('verbose', ""):
-                print(f"JSON decoding error encountered for response: {json_object}")
-            return False
-
-        if self.config.get('verbose', ""):
-            print("Response validated successfully.")
-
-        return True
+        return APIResponse(json_object, True, "Response validated successfully.")
 
 
     
@@ -180,24 +161,28 @@ class DocstringProcessor:
     def extract_docstrings(self, responses) -> APIResponse:
         # Merge responses before validity check
         json_responses = []
-        for response in responses:
-            json_object, is_valid, error_message = Utility.parse_json(response)
-            if not is_valid:
-                message: str = f"Invalid response: {response}\nError: {error_message}"
-                if self.config.get('verbose', ""):                    
-                    print(message)
-                return APIResponse("", False, message)
+        if isinstance(responses, list):
+            for response in responses:
+                parse_json_response: APIResponse = Utility.parse_json(response)
+                json_object = parse_json_response.content
+                if not parse_json_response.is_valid:
+                    return parse_json_response
+
+                json_responses.append(json_object)
+        else:
+            parse_json_response: APIResponse = Utility.parse_json(responses)
+            json_object = parse_json_response.content
+            if not parse_json_response.is_valid:
+                return parse_json_response
+
             json_responses.append(json_object)
 
         merged_response = self.merge_json_objects(json_responses)
 
         # Check the validity of the merged response
-        is_valid = self.validate_response(merged_response)
-        if not is_valid:
-            message: str = f"Invalid response after merging. Aborting extraction."
-            if self.config.get('verbose', ""):                    
-                print(message)
-            return APIResponse("", False, message)            
+        response = self.validate_response(merged_response)
+        if not response.is_valid:
+            return response           
 
         # Extract docstrings from merged data
         docstrings = merged_response.get("docstrings", {})

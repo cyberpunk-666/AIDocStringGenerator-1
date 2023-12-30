@@ -31,7 +31,7 @@ class FileProcessor:
             self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
             self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
             self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
-            self.config = ConfigManager().config
+            self.config: dict[str, str]  = ConfigManager().config
             self._initialized = True
 
 
@@ -183,7 +183,7 @@ class FileProcessor:
             else:
                 print('Invalid path or file type. Please provide a Python file or directory.')
 
-
+    
 
     def process_file(self, file_path) -> APIResponse:
         file_name = os.path.basename(file_path)
@@ -193,34 +193,49 @@ class FileProcessor:
             if self.config.get('verbose', ""):
                 print(message)
             return APIResponse("", False, message)
-
-        ask_count = 0
-        # Read the source code from the file
+                # Read the source code from the file
         with open(file_path, 'r') as file:
             source_code = file.read() 
+            
+        process_code_response = self.process_code(source_code)
+        if process_code_response.is_valid:
+            if not ConfigManager().config.get('dry_run', False):
+                self.write_new_code(file_path, process_code_response)
 
+        return process_code_response
+
+        
+    def process_code(self, source_code) -> APIResponse:
+        ask_count = 0
+    
+        last_error_message = ""
         while True:
             ask_count += 1
-            response_docstrings: APIResponse = self.try_generate_docstrings(source_code, ask_count)
+            response_docstrings: APIResponse = self.try_generate_docstrings(source_code, ask_count, last_error_message)
             if response_docstrings.is_valid:
                 source_code = self.docstring_processor.insert_docstrings(source_code, response_docstrings.content)
                 break
             else:
+                last_error_message = response_docstrings.error_message
                 if ask_count == MAX_RETRY_LIMIT:  # Define MAX_RETRY_LIMIT as per your requirement
                     break
 
+        if not response_docstrings.is_valid:
+            return response_docstrings
+        
         process_examples_response = self.process_examples(source_code, response_docstrings)
-        if ConfigManager().config.get('dry_run', False):
-            return process_examples_response
-        self.write_new_code(file_path, process_examples_response)
         return process_examples_response
-
         
     def write_new_code(self, file_path, process_examples_response):
+        file_name = Path(file_path).name
+        bot_path = Path(Path(file_path).parent, self.config.get("bot", ""))
+        if not bot_path.exists():
+            bot_path.mkdir(exist_ok=True)
+        bot_path = Path(bot_path, file_name)
         if process_examples_response.is_valid:
-            with open(file_path, 'w') as file:
+            with open(bot_path, 'w') as file:
                 file.write(process_examples_response.content)
-            self.log_processed_file(file_path)
+            self.log_processed_file(bot_path)
 
     def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:
         if response_docstrings.is_valid:
@@ -266,43 +281,24 @@ class FileProcessor:
 
         return retry_response
 
-    def try_generate_docstrings(self, source_code, retry_count) -> APIResponse:
+    def try_generate_docstrings(self, source_code, retry_count=1, last_error_message="") -> APIResponse:
         """Attempts to generate docstrings, retrying if necessary."""
         if not self.bot_communicator:
             return APIResponse("", False)
 
-
-        # Check if the communicator is of type FileCommunicator
-        if isinstance(self.bot_communicator, FileCommunicator):
-            result = self.communicator_manager.handle_file_based_responses()
+        if retry_count == 1:
+            result = self.communicator_manager.send_code_in_parts(source_code, retry_count)
         else:
-            if retry_count == 1:
-                result = self.communicator_manager.send_code_in_parts(source_code)
+            if self.communicator_manager.bot_communicator:
+                result = self.communicator_manager.bot_communicator.ask_retry(last_error_message, retry_count)                
             else:
-                if self.communicator_manager.bot_communicator:
-                    result = self.communicator_manager.bot_communicator.ask_retry()
-                else:
-                    return APIResponse("", False)
-
+                return APIResponse("", False)
 
         if result.is_valid:
             docstring_response: APIResponse = self.docstring_processor.extract_docstrings(result.content)
-            if docstring_response.is_valid:
-                return docstring_response
+            return docstring_response
         else:
-            return APIResponse("", False)
-            
-        # If no response or not success, try retry method
-        
-        if self.bot_communicator:
-            retry_response = self.bot_communicator.ask_retry()
-            if retry_response and not retry_response.is_valid:
-                return retry_response
-            docstring_response = self.docstring_processor.extract_docstrings(retry_response)
-            if not docstring_response.is_valid:
-                return docstring_response
-            
-        return docstring_response
+            return result
 
 
     def save_response(self, file_path: Path,  docstrings):

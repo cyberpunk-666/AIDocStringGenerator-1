@@ -1,13 +1,1 @@
-Some text
-{
-    "docstrings": {
-        "Test": {
-            "docstring": "Class to contain test functions.",
-            "methods": {
-                "func1": "Adds two numbers together.",
-                "func2": "Checks sign of a number."
-            }
-        }
-    }
-}
-More text
+Bad Response text

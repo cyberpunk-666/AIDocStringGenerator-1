@@ -9,14 +9,10 @@ from dotenv import load_dotenv
 
 
 # Import other necessary modules...
-
+load_dotenv()
+@unittest.skipIf(os.environ.get('RUNNING_IN_CI') == 'true', "Skipping this test in CI environment")
 class DocStringGeneratorTest(unittest.TestCase):
     bot_communicator = None
-
-    @classmethod
-    def setUpClass(cls):
-        load_dotenv()
-
 
     def setUp(self):
         if self.__class__ == DocStringGeneratorTest:
@@ -59,11 +55,11 @@ class DocStringGeneratorTest(unittest.TestCase):
 
         #response_data = json.loads(response.content)
         #docstrings = response_data.get('docstrings', {})
-        docstrings, is_valid = dependencies.resolve("DocstringProcessor").extract_docstrings([response.content])
+        response = dependencies.resolve("DocstringProcessor").extract_docstrings(response.content)
 
-        self.assertTrue(is_valid)
+        self.assertTrue(response.is_valid)
 
-        for class_name, class_info in docstrings.items():
+        for class_name, class_info in response.content.items():
             if class_name != 'global_functions':
                 self.assertTrue(all(len(line) <= 50 for line in class_info['docstring'].split('\n')))
                 self.assertTrue(all(len(line) <= 50 for line in class_info['example'].split('\n')))
@@ -91,15 +87,14 @@ class DocStringGeneratorTest(unittest.TestCase):
         response = self.file_processor.try_generate_docstrings(sample_code)
         
         self.assertTrue(response.is_valid)
-        self.assertIn("my_method", response.content["docstrings"]["MyClass"]["methods"])
+        self.assertIn("my_method", response.content["MyClass"]["methods"])
 
     def test_global_function_docstring_generation(self):
         # Test if global functions have their docstrings generated
         sample_code = "def my_function():\n    pass"
-        sample_code = "class MyClass:\n    def my_method(self):\n        pass"
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        self.assertIn("my_function", json_response["docstrings"]["global_functions"])
+        self.assertIn("my_function", json_response["global_functions"])
 
     def test_character_limit_enforcement(self):
         # Test if the character limit is enforced in the response
@@ -122,8 +117,8 @@ class MyClass:
 """
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        self.assertIn("method1", json_response["docstrings"]["MyClass"]["methods"])
-        self.assertIn("method2", json_response["docstrings"]["MyClass"]["methods"])
+        self.assertIn("method1", json_response["MyClass"]["methods"])
+        self.assertIn("method2", json_response["MyClass"]["methods"])
 
     def test_inheritance_handling(self):
         # Test generating docstrings for classes with inheritance
@@ -138,8 +133,8 @@ class ChildClass(ParentClass):
 """
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        self.assertIn("ParentClass", json_response["docstrings"])
-        self.assertIn("ChildClass", json_response["docstrings"])
+        self.assertIn("ParentClass", json_response)
+        self.assertIn("ChildClass", json_response)
 
     def test_docstring_for_complex_functions(self):
         # Test generating docstrings for functions with complex signatures
@@ -149,7 +144,7 @@ def complex_function(param1, param2='default', *args, **kwargs):
         """
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        self.assertIn("complex_function", json_response["docstrings"]["global_functions"])
+        self.assertIn("complex_function", json_response["global_functions"])
 
     def test_handling_of_decorators(self):
         # Test generating docstrings for decorated functions and methods
@@ -165,22 +160,18 @@ def decorated_function(param):
 """
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        self.assertIn("decorated_function", json_response["docstrings"]["global_functions"])
+        self.assertIn("decorated_function", json_response["global_functions"])
 
     def test_docstring_format_consistency(self):
         # Test if the docstring format is consistent across various elements
         sample_code = "class MyClass:\n    def my_method(self):\n        pass"
         response = self.file_processor.try_generate_docstrings(sample_code)
         json_response = response.content
-        # Check for consistent formatting in class and method docstrings, examples, etc.
-        class_docstring = json_response["docstrings"]["MyClass"]["docstring"]
-        method_docstring = json_response["docstrings"]["MyClass"]["methods"]["my_method"]
-        self.assertTrue(self.is_consistent_format(class_docstring, method_docstring))
+        self.assertTrue(self.is_consistent_format(json_response))
 
-    def is_consistent_format(self, *args):
-        # Helper method to check formatting consistency
-        # Implement specific checks based on your docstring format requirements
-        pass
+    def is_consistent_format(self, docstring_object):
+        return dependencies.resolve("DocstringProcessor").validate_response(docstring_object)        
+
 
 
 

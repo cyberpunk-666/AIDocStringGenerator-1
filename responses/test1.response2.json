@@ -1,0 +1,11 @@
+
+"docstrings": {
+    "TestClass": {
+        "docstring": "ClassName description",
+        "example1": "variable = ClassName.function1_name()\nprint(variable)",
+        "methods": {
+            "test_method": "function1_name description",
+            "test_method2": "function2_name description",            
+        }
+    }
+}
