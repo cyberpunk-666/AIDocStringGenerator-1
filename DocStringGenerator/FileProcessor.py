@@ -227,18 +227,18 @@ class FileProcessor:
         if not response_docstrings.is_valid:
             return response_docstrings
         
-        process_examples_response = self.process_examples(source_code, response_docstrings)
-        return process_examples_response
+        final_code_response = self.process_examples(source_code, response_docstrings)
+        return final_code_response
         
-    def write_new_code(self, file_path, process_examples_response):
+    def write_new_code(self, file_path, final_code_response):
         file_name = Path(file_path).name
         bot_path = Path(Path(file_path).parent, self.config.get("bot", ""))
         if not bot_path.exists():
             bot_path.mkdir(exist_ok=True)
         bot_path = Path(bot_path, file_name)
-        if process_examples_response.is_valid:
+        if final_code_response.is_valid:
             with open(bot_path, 'w') as file:
-                file.write(process_examples_response.content)
+                file.write(final_code_response.content)
             self.log_processed_file(bot_path)
 
     def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:

@@ -244,7 +244,8 @@ class FileCommunicator(BaseBotCommunicator):
         example_retry = replacements.get('example_retry', False)
         base_bot_file = self.config.get('model', "")
         if not example_retry:
-            bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
+            response_index_str = "" if response_index == 1 else response_index
+            bot_file = f"{base_bot_file}.response{response_index_str}.json"
         else:
             bot_file = f"{base_bot_file}.example.json"
         try:
