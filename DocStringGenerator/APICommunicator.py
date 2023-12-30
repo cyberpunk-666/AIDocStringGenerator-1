@@ -330,7 +330,8 @@ class CommunicatorManager:
 
         counter = 1
         try:
-            bot_file = f"{base_bot_file}.response{"" if response_index == 1 else response_index}.json"
+            response_index_str = "" if response_index == 1 else response_index
+            bot_file = f"{base_bot_file}.response{response_index_str}.json"            
             with open(bot_file, 'r') as f:
                 response_text = f.read()
                 responses.append(response_text)
