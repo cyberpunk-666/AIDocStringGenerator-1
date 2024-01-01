@@ -60,10 +60,10 @@ class CodeProcessor:
             split_point = min(max_lines, source_code.count("\n"))
         return split_point
 
-    def find_end_line(self, node, max_lines) -> int | None:
+    def find_end_line(self, node, max_lines) -> int:
         """Determines the end line number for a given AST node."""
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if max_lines >= node.end_lineno:
+            if node.end_lineno and max_lines >= node.end_lineno:
                 return node.end_lineno
             else:
                 return node.lineno - 1
