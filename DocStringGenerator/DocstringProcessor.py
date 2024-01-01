@@ -100,7 +100,7 @@ class DocstringProcessor:
         return '\n'.join(formatted_docstring)
 
             
-    def validate_response(self, json_object, example_only = False) -> APIResponse:
+    def validate_response(self, json_object, example_only=False, max_length=999) -> APIResponse:
         try:
             if self.config.get('verbose', ""):
                 print("Validating docstrings...")
@@ -121,6 +121,12 @@ class DocstringProcessor:
                             return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
                         if "methods" in value and not isinstance(value["methods"], dict):
                             return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
+
+                    # Check docstring length
+                    docstring = value.get('docstring', "")
+                    for line in docstring.split("\n"):
+                        if len(line) > max_length:
+                            return APIResponse(json_object, False, f"Docstring line in '{key}' exceeds maximum length of {max_length} characters.")
 
             if self.config.get('verbose', ""):
                 print("Validating examples...")

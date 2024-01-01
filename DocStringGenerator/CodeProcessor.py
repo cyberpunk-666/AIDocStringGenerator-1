@@ -8,23 +8,37 @@ import ast
 import json
 import logging
 
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from typing import Dict
 from DocStringGenerator.Spinner import Spinner
 from DocStringGenerator.ResultThread import ResultThread
-from DocStringGenerator.Utility import Utility
+from DocStringGenerator.Utility import *
 from DocStringGenerator.DependencyContainer import DependencyContainer
 from DocStringGenerator.ConfigManager import ConfigManager
 
 FILES_PROCESSED_LOG = "files_processed.log"
 MAX_RETRY_LIMIT = 2
-class FileProcessor:
+
+class DocstringChecker(ast.NodeVisitor):
+    """AST visitor that checks for the presence of docstrings in functions."""
+
+    def __init__(self):
+        self.missing_docstrings = []
+
+    def visit_FunctionDef(self, node):
+        """Visit a function definition and check if it has a docstring."""
+        if not ast.get_docstring(node):
+            self.missing_docstrings.append(node.name)
+        self.generic_visit(node)  # Continue traversing child nodes
+
+class CodeProcessor:
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(FileProcessor, cls).__new__(cls)
+            cls._instance = super(CodeProcessor, cls).__new__(cls)
         return cls._instance
         
     def __init__(self):
@@ -221,8 +235,12 @@ class FileProcessor:
                 break
             else:
                 last_error_message = response_docstrings.error_message
-                if ask_count == MAX_RETRY_LIMIT:  # Define MAX_RETRY_LIMIT as per your requirement
+                if ask_count == MAX_RETRY_LIMIT:
                     break
+
+        verify_response = self.verify_code_docstrings(source_code)
+        if not verify_response.is_valid:
+            self.communicator_manager.bot_communicator.ask_missing_docstrings(verify_response.content)
 
         if not response_docstrings.is_valid:
             return response_docstrings
@@ -322,6 +340,23 @@ class FileProcessor:
         with open(response_file_path, 'w') as f:
             json.dump(docstrings, f, indent=4)
 
+
+    def verify_code_docstrings(self, source) -> APIResponse:
+        """Checks all functions in a Python source file for docstrings."""
+
+        try:
+            tree = ast.parse(source)
+        except SyntaxError as e:
+            return APIResponse("", False, f"Invalid Python code: {e}")
+
+        checker = DocstringChecker()
+        checker.visit(tree)
+
+        if checker.missing_docstrings:
+            message = f"Functions without docstrings: {', '.join(checker.missing_docstrings)}"
+            return APIResponse(checker.missing_docstrings, False, message)
+        else:
+            return APIResponse([], True, "All functions have docstrings.")
 
 
     def wipe_docstrings(self, source) -> APIResponse:
@@ -425,4 +460,4 @@ class DocstringRemover(ast.NodeTransformer):
     
 dependencies = DependencyContainer()
 dependencies.register('DocstringRemover', DocstringRemover)
-dependencies.register('FileProcessor', FileProcessor)
+dependencies.register('CodeProcessor', CodeProcessor)

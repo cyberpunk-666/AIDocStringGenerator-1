@@ -12,9 +12,13 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
 
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.ConfigManager import ConfigManager
 from dotenv import load_dotenv
 

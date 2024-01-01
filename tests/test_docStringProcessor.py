@@ -10,7 +10,11 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from dotenv import load_dotenv
 
 dependencies = DependencyContainer()

@@ -8,14 +8,17 @@ parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
 from pathlib import Path
 
-from DocStringGenerator.APICommunicator import *
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.Utility import *
 from DocStringGenerator.ConfigManager import ConfigManager
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from dotenv import load_dotenv
 
 class TestDocStringGenerator(unittest.TestCase):
@@ -43,24 +46,20 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_find_split_point(self):
         source_code = "def function(self):\n    print('Hello, world!')\n\nprint('Goodbye, world!')"
-        split_point = dependencies.resolve("FileProcessor").find_split_point(source_code, 3)
+        split_point = dependencies.resolve("CodeProcessor").find_split_point(source_code, 3)
         assert split_point == 2
 
     def test_split_source_code(self):
         source_code = "def function(self):\n    print('Hello, world!')\n\nprint('Goodbye, world!')"
-        part1, part2 = dependencies.resolve("FileProcessor").split_source_code(source_code, 2)
+        part1, part2 = dependencies.resolve("CodeProcessor").split_source_code(source_code, 2)
         assert part1 == "def function(self):\n    print('Hello, world!')\n"
         assert part2 == "\nprint('Goodbye, world!')"
          
 
     def test_wipe_docstrings(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir, "classTest_orig.py")
-            file_path.write_text("def function(self):\n    \"\"\"\n    This is a function\n    \"\"\"\n    pass\n\nclass MyClass:\n    \"\"\"\n    This is a class\n    \"\"\"    \n    pass")
-            dependencies.resolve("FileProcessor").wipe_docstrings(Path(file_path))
-            with open(str(file_path), "r") as file:
-                content = file.read()
-            assert content == "def function(self):\n    pass\n\nclass MyClass:\n    pass"
+        source_code = "def function(self):\n    \"\"\"\n    This is a function\n    \"\"\"\n    pass\n\nclass MyClass:\n    \"\"\"\n    This is a class\n    \"\"\"    \n    pass"
+        response = dependencies.resolve("CodeProcessor").wipe_docstrings(source_code)
+        assert response.content == "def function(self):\n    pass\n\nclass MyClass:\n    pass"
 
 
     def test_list_files(self):
@@ -72,7 +71,7 @@ class TestDocStringGenerator(unittest.TestCase):
             file2.write_text("print('File 2')")
 
             # Call the method under test
-            files = dependencies.resolve("FileProcessor").list_files(Path(tmpdir), ".py")
+            files = dependencies.resolve("CodeProcessor").list_files(Path(tmpdir), ".py")
 
             # Assertions
             self.assertEqual(len(files), 2)
@@ -91,9 +90,9 @@ class TestDocStringGenerator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             log_file_path = Path(tmpdir) / "test_log.txt"
             log_file_path.write_text("file1.py\nfile2.py")
-            assert dependencies.resolve("FileProcessor").is_file_processed("file1.py", log_file_path)
-            assert dependencies.resolve("FileProcessor").is_file_processed("file2.py", log_file_path)
-            assert not dependencies.resolve("FileProcessor").is_file_processed("file3.py", log_file_path)
+            assert dependencies.resolve("CodeProcessor").is_file_processed("file1.py", log_file_path)
+            assert dependencies.resolve("CodeProcessor").is_file_processed("file2.py", log_file_path)
+            assert not dependencies.resolve("CodeProcessor").is_file_processed("file3.py", log_file_path)
 
 if __name__ == '__main__':
     unittest.main()

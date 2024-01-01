@@ -4,18 +4,25 @@ import os
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from dotenv import load_dotenv
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
+from pathlib import Path
+
+
 
 class TestCodeSplitter(unittest.TestCase):
     
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.code_splitter = dependencies.resolve("FileProcessor")
+        self.code_splitter = dependencies.resolve("CodeProcessor")
 
     def test_split_simple_code(self):
         code = "line1\nline2\nline3\nline4"

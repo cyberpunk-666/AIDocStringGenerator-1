@@ -1,6 +1,6 @@
 import unittest
 import ast
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer
 dependencies = DependencyContainer()
 
@@ -9,7 +9,7 @@ dependencies = DependencyContainer()
 
 class TestWipeDocstrings(unittest.TestCase):
     def setUp(self) -> None:
-        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
 
     def test_remove_docstrings(self):
         source = '''
@@ -24,7 +24,7 @@ class MyClass:
     def my_method(self):
         pass
 '''
-        response = self.file_processor.wipe_docstrings(source)
+        response = self.code_processor.wipe_docstrings(source)
         self.assertTrue(response.is_valid)
         self.assertEqual(response.content, ast.unparse(ast.parse(expected)))
 
@@ -34,7 +34,7 @@ class MyClass:
     def my_method(self):
         pass
 '''
-        response = self.file_processor.wipe_docstrings(source)
+        response = self.code_processor.wipe_docstrings(source)
         self.assertTrue(response.is_valid)
         self.assertEqual(response.content, ast.unparse(ast.parse(source)))
 
@@ -44,7 +44,7 @@ class MyClass
     def my_method(self):
         pass
 '''
-        response = self.file_processor.wipe_docstrings(source)
+        response = self.code_processor.wipe_docstrings(source)
         self.assertFalse(response.is_valid)
         self.assertIn("Invalid Python code:", response.error_message)
 

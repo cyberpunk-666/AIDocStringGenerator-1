@@ -6,14 +6,16 @@ from urllib import response
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.Utility import Utility
 from DocStringGenerator.DependencyContainer import DependencyContainer
 from dotenv import load_dotenv
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.APICommunicator import *
-
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from pathlib import Path
 
 dependencies = DependencyContainer()
 class test_addExampleFunctionsToClasses(unittest.TestCase):
@@ -25,7 +27,7 @@ class test_addExampleFunctionsToClasses(unittest.TestCase):
         
         self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
         self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
-        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
 
         self.file_path = self.temp_file.name
@@ -45,7 +47,7 @@ class TestClass:
         config = {"verbose": False}
         # load file from self.file_path
         code_source = Path(self.file_path).read_text()
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
@@ -56,7 +58,7 @@ class TestClass:
     def test_append_function_nonexistent_class(self):
         examples = {"NonExistentClass": "print('This should not work')"}
         config = {"verbose": False}
-        response = self.file_processor.add_example_functions_to_classes(self.file_path, examples)
+        response = self.code_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertFalse(response.is_valid)
         self.assertIn("NonExistentClass", response.content)    
 
@@ -75,7 +77,7 @@ class AnotherTestClass:
         }
         config = {"verbose": False}   
         code_source = Path(self.file_path).read_text()     
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
@@ -86,7 +88,7 @@ class AnotherTestClass:
         examples = {"TestClass": "for i in range(5):\n    print(i)"}
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text() 
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
@@ -99,7 +101,7 @@ class AnotherTestClass:
         examples = {"TestClass": "if True print('Missing colon')"}
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text()
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertFalse(response.is_valid)
 
         self.assertNotIn("if True print('Missing colon')", response.content)
@@ -117,7 +119,7 @@ class OuterClass:
         examples = {"InnerClass": "print('Hello from InnerClass')"}
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text()
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
@@ -133,7 +135,7 @@ class OuterClass:
         examples = {"TestClass": "print('Hello from TestClass')"}
         config = {"verbose": False}
         code_source = Path(self.file_path).read_text()
-        response= self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response= self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertFalse(response.is_valid)
         self.assertIn("TestClass", response.content)
 
@@ -145,7 +147,7 @@ class OuterClass:
 
         # Append the multi-line function to TestClass
         code_source = Path(self.file_path).read_text()
-        response = self.file_processor.add_example_functions_to_classes(code_source, examples)
+        response = self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 

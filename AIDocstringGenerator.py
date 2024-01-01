@@ -1,7 +1,7 @@
 import os
 import platform
 from DocStringGenerator.ConfigManager import ConfigManager
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer
 
 dependencies = DependencyContainer()
@@ -46,8 +46,8 @@ def main():
         if value:
             config[arg] = value        
 
-    file_processor = dependencies.resolve("FileProcessor")
-    response = file_processor.process_folder_or_file()
+    code_processor = dependencies.resolve("CodeProcessor")
+    response = code_processor.process_folder_or_file()
     if not response.is_valid:
         failed_files = response.content
         for file in failed_files:

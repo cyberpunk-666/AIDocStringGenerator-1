@@ -11,9 +11,13 @@ sys.path.append(f"{parent}")
 from pathlib import Path
 from dotenv import load_dotenv
 
-from DocStringGenerator.FileProcessor import FileProcessor
+from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 
 
 class TestSourceCodeSplitting(unittest.TestCase):
@@ -23,10 +27,10 @@ class TestSourceCodeSplitting(unittest.TestCase):
         self.config = {"verbose": False}
         self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
         self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
-        self.file_processor: FileProcessor = dependencies.resolve("FileProcessor")
+        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
 
-        self.instance = dependencies.resolve("FileProcessor")
+        self.instance = dependencies.resolve("CodeProcessor")
 
     # Tests for find_split_point
     def test_split_point_valid_code(self):
@@ -128,7 +132,7 @@ class TestSourceCodeSplittingAdvanced(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.instance = dependencies.resolve("FileProcessor")
+        self.instance = dependencies.resolve("CodeProcessor")
 
     # Test with Nested Functions and Classes
     def test_nested_functions_classes(self):

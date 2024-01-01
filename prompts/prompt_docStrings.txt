@@ -1,6 +1,8 @@
-I am requesting docstrings for specific Python functions and classes that currently lack documentation and a functional example for each class in the following Python code.
+I'm requesting docstrings and code examples for specific Python code elements, with careful attention to global functions.
 
-Crucially, please ensure that ALL lines in the generated JSON response, including docstrings, code examples, and any other text, adhere to a maximum length of {max_line_length} characters.
+Key requirements:
+
+Strict adherence to line length: Enforce a maximum line length of {max_line_length} characters for all text within the JSON response.
 
 The level of detail in the docstrings should be adjustable based on a verbosity scale from 0 to 5, as follows:
 
@@ -27,44 +29,32 @@ Function docstrings: {function_docstrings_verbosity_level}
 Example: {example_verbosity_level}
 Please use these levels to determine the appropriate level of detail in each section of the response.
 
-Additionally, please provide a code example demonstrating the functionality of the main class or a key function in the code.
-
-Please adhere to the following JSON format for the response, using simple double quotes for strings:
+JSON format: Adhere to the specified JSON response structure (see below).
+Focus on undocumented elements: Only generate docstrings for those currently lacking them.
+Specific attention to global functions: Ensure clear identification and documentation of functions not defined within classes.
+JSON response format:
 
 {
     "docstrings": {
         "ClassName": {
-            "docstring": "ClassName description\\nDescription continue",
-            "example": "variable = ClassName.function1_name()\\nprint(variable)",
+            "docstring": "Class description",
+            "example": "Code example",
             "methods": {
-                "function1_name": "function1_name description",
-                "function2_name": "function2_name description"
-            }
-        },
-        "ClassName2": {
-            "docstring": "ClassName2 description",
-            "example": "variable = ClassName2.function1_name()\\nprint(variable)",
-            "methods": {
-                "function1_name": "function1_name description",
-                "function2_name": "function2_name description"
+                "function_name": "Function description"
             }
         },
         "global_functions": {
-            "global_function1": "global_function1 description",
-            "global_function2": "global_function2 description"
+            "global_function_name": "Global function description"
         }
     }
 }
+Code:
 
-Note the double backslash "\\n" for break line in examples
-
-Remember to strictly enforce the {max_line_length}-character limit on all lines within the generated JSON response.
-
-Here is the Python code for which I need the docstrings and functional example:
-
-python
 {source_code}
+Additional notes:
 
-Note: Only generate docstrings for functions and classes that currently lack them.
-Ensure the response follows the specified format and reflects the appropriate level of detail as per the verbosity setting.
+Double backslashes for line breaks: Use \\n for line breaks in examples and docstrings.
+Verbosity levels: Guide the level of detail in docstrings and examples (see definitions above).
+Example: Provide a code example for the main class or a key function.
+Please carefully parse the code to accurately identify and document global functions, ensuring their proper placement within the â€śglobal_functionsâ€ť section of the JSON response.
 

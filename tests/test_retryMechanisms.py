@@ -1,9 +1,14 @@
 import unittest
 from unittest.mock import patch, mock_open, Mock
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
-from DocStringGenerator.FileProcessor import FileProcessor
-from DocStringGenerator.APICommunicator import *
+from DocStringGenerator.CodeProcessor import CodeProcessor
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
+from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.DocstringProcessor import DocstringProcessor
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from DocStringGenerator.ConfigManager import ConfigManager
+from pathlib import Path
 
 class FileMock:
     def __init__(self, file_content_map):
@@ -42,8 +47,8 @@ class TestAIDocStringGenerator(unittest.TestCase):
     def test_valid_response_on_retry(self):
         with patch('builtins.open', self.file_mock) as mock_file:
             mock_file: FileMock 
-            file_processor = FileProcessor()
-            response = file_processor.process_code("class classTest:\n    def test_method(self):\n        pass")
+            code_processor = CodeProcessor()
+            response = code_processor.process_code("class classTest:\n    def test_method(self):\n        pass\n    def test_method2(self):\n        pass")
             # Assert that the correct file was read on the second attempt
             self.assertEqual(response.error_message, "")
             self.assertTrue(response.is_valid)

@@ -9,7 +9,7 @@ AIDocStringGenerator.egg-info/top_level.txt
 DocStringGenerator/APICommunicator.py
 DocStringGenerator/ConfigManager.py
 DocStringGenerator/DocstringProcessor.py
-DocStringGenerator/FileProcessor.py
+DocStringGenerator/CodeProcessor.py
 DocStringGenerator/ResultThread.py
 DocStringGenerator/Spinner.py
 DocStringGenerator/Utility.py
