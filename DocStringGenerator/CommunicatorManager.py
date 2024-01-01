@@ -13,7 +13,7 @@ from DocStringGenerator.DependencyContainer import DependencyContainer
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.EmptyCommunicator import EmptyCommunicator
-from DocStringGenerator.ClaudeCommunicator import ClaudeCommunicator
+from DocStringGenerator.AnthropicCommunicator import AnthropicCommunicator
 from DocStringGenerator.BardCommunicator import BardCommunicator
 from DocStringGenerator.OpenAICommunicator import OpenAICommunicator
 from DocStringGenerator.FileCommunicator import FileCommunicator
@@ -31,7 +31,7 @@ class CommunicatorManager:
         bot = self.config.get('bot', '')
         if not bot in BOTS:
             raise ValueError(f"Unsupported bot type '{bot}' specified in the configuration")
-        dependencies.register('claude_Communicator', ClaudeCommunicator)
+        dependencies.register('anthropic_Communicator', AnthropicCommunicator)
         dependencies.register('openai_Communicator', OpenAICommunicator)
         dependencies.register('bard_Communicator', BardCommunicator)
         dependencies.register('file_Communicator', FileCommunicator)

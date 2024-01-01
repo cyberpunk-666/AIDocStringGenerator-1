@@ -23,7 +23,7 @@ SAMPLE_JSON_1 = json.dumps({
     "docstrings": {
         "APICommunicator": {
             "docstring": "Handles communication with API services.",
-            "ask_claude": "Sends prompt to Claude API."
+            "ask_anthropic": "Sends prompt to Anthropic API."
         }
     },
     "examples": {

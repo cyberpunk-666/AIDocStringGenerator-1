@@ -237,16 +237,29 @@ class CodeProcessor:
                 last_error_message = response_docstrings.error_message
                 if ask_count == MAX_RETRY_LIMIT:
                     break
-
-        verify_response = self.verify_code_docstrings(source_code)
-        if not verify_response.is_valid:
-            self.communicator_manager.bot_communicator.ask_missing_docstrings(verify_response.content)
+            
 
         if not response_docstrings.is_valid:
             return response_docstrings
         
         final_code_response = self.process_examples(source_code, response_docstrings)
-        return final_code_response
+        if final_code_response.is_valid:
+            source_code = final_code_response.content
+            verify_response = self.verify_code_docstrings(source_code)
+            if verify_response.is_valid:
+                return final_code_response
+            else:
+                missing_docstrings_response = self.communicator_manager.bot_communicator.ask_missing_docstrings(verify_response.content)
+                if missing_docstrings_response.is_valid:
+                    extract_docstrings_response : APIResponse = self.docstring_processor.extract_docstrings(missing_docstrings_response.content, ask_missing=True)
+                    if extract_docstrings_response.is_valid:
+                        source_code = self.docstring_processor.insert_docstrings(source_code, extract_docstrings_response.content)
+                    return APIResponse(source_code, True)
+
+                else:
+                    return final_code_response
+        else:
+            return final_code_response
         
     def write_new_code(self, file_path, final_code_response):
         file_name = Path(file_path).name

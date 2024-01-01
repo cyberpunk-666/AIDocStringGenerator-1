@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: AIDocStringGenerator
 Version: 1.0
-Summary: AIDocStringGenerator is an automated tool that utilizes AI technologies like Claude and OpenAI GPT-3.5 to generate and manage docstrings in Python code. It streamlines documentation by processing both single files and entire directories, offering customizable settings for docstring verbosity and style. This tool is ideal for enhancing code readability and maintainability in Python projects.
+Summary: AIDocStringGenerator is an automated tool that utilizes AI technologies like Anthropic and OpenAI GPT-3.5 to generate and manage docstrings in Python code. It streamlines documentation by processing both single files and entire directories, offering customizable settings for docstring verbosity and style. This tool is ideal for enhancing code readability and maintainability in Python projects.
 Home-page: https://github.com/fantasiiio/AIDocStringGenerator
 Author: Francois Girard
 Author-email: fantasiiio@hotmail.com
@@ -10,7 +10,7 @@ License-File: LICENCE
 
 ### AIDocStringGenerator: Overview and Purpose
 
-**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Claude and OpenAI GPT-3.5, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
+**AIDocStringGenerator** is an advanced Python tool engineered to streamline the task of creating and updating docstrings in Python source files. Utilizing cutting-edge AI technologies like Anthropic and OpenAI GPT-3.5, this application delivers high-quality, context-aware docstrings that significantly enhance code readability and maintainability.
 
 **Key Features**:
 
@@ -53,7 +53,7 @@ The Docstring Generator is particularly useful for:
 
 -   Python installed on your system.
 -   Basic familiarity with Python programming.
--   Access to AI services like Claude or GPT-4
+-   Access to AI services like Anthropic or GPT-4
 
 
 ### Basic Setup and Configuration
@@ -71,9 +71,9 @@ The Docstring Generator is particularly useful for:
 -   **path:**  The file or directory path to process.
 -   **wipe_docstrings:**  If  `true`, existing docstrings in files will be wiped before generating new ones.
 -   **verbose:**  Enable verbose output if set to  `true`.
--   **bot:**  Specify the AI bot to use (options include  `gpt3.5`,  `gpt4`,  `gpt4-120k`,  `claude`,  `file`).
+-   **bot:**  Specify the AI bot to use (options include  `gpt3.5`,  `gpt4`,  `gpt4-120k`,  `anthropic`,  `file`).
 -   **bot_response_file:**  This parameter allows you to specify the base name of a single file that contains pre-defined responses, located in the "responses" folder. The tool reads and uses responses from this file and its sequentially numbered parts (if any), such as  `file_name.response.json`,  `file_name.response2.json`,  `file_name.response3.json`, etc. This setup is ideal for testing and debugging with predetermined, multi-part responses when direct interaction with an AI bot is not feasible.
--   **BARD_API_KEY`,`OPENAI_API_KEY`,`CLAUDE_API_KEY:**  API keys for the respective AI services.
+-   **BARD_API_KEY`,`OPENAI_API_KEY`,`ANTHROPIC_API_KEY:**  API keys for the respective AI services.
 -   **include_subfolders:**  Set to  `true`  to include subfolders in processing.
 -   **class_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for classes. Valid values are 0-5, with higher values indicating more detailed docstrings.
 -   **function_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for functions. Valid values are 0-5, with higher values indicating more detailed docstrings.
@@ -87,7 +87,7 @@ The Docstring Generator is particularly useful for:
     -   Command line arguments allow you to override settings in `config.json`.
     -   Example command:
         
-        `AIDocStringGenerator --path "/path/to/source" --verbose --wipe_docstrings --bot "claude" --include_subfolders --verbosity_level "5"` 
+        `AIDocStringGenerator --path "/path/to/source" --verbose --wipe_docstrings --bot "anthropic" --include_subfolders --verbosity_level "5"` 
         
 	**Verbosity Levels:**
 
@@ -131,17 +131,17 @@ steps:
     AIDocStringGenerator --path "$GITHUB_WORKSPACE/path/to/source" \
                          --verbose \
                          --wipe_docstrings \
-                         --bot "claude" \
+                         --bot "anthropic" \
                          --include_subfolders \
                          --verbosity_level "5" \
                          --BARD_API_KEY ${{ secrets.BARD_API_KEY }} \
                          --OPENAI_API_KEY ${{ secrets.OPENAI_API_KEY }} \
-                         --CLAUDE_API_KEY ${{ secrets.CLAUDE_API_KEY }}
+                         --ANTHROPIC_API_KEY ${{ secrets.ANTHROPIC_API_KEY }}
 ```  
 
  In this GitHub Actions example:    
     -   `$GITHUB_WORKSPACE` is an environment variable indicating the workspace directory.
-    -   `secrets.BARD_API_KEY`, `secrets.OPENAI_API_KEY`, and `secrets.CLAUDE_API_KEY` are GitHub Actions secrets containing the API keys.
+    -   `secrets.BARD_API_KEY`, `secrets.OPENAI_API_KEY`, and `secrets.ANTHROPIC_API_KEY` are GitHub Actions secrets containing the API keys.
     
 4.  **Setting Up Secrets in GitHub Actions**:
     
@@ -193,7 +193,7 @@ JSON
     "verbose": true,
     "BARD_API_KEY": "",
     "OPENAI_API_KEY": "",
-    "CLAUDE_API_KEY": "",
+    "ANTHROPIC_API_KEY": "",
     "keep_responses": false,
     "ignore": [".venv"],
     "class_docstrings_verbosity_level": 5,

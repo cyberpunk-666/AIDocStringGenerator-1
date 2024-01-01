@@ -21,7 +21,7 @@ class BaseBotCommunicator:
         load_dotenv()
         configManager.set_config('verbose', True)
         configManager.set_config('OPENAI_API_KEY', os.getenv('OPENAI_API_KEY'))
-        configManager.set_config('CLAUDE_API_KEY', os.getenv('CLAUDE_API_KEY'))
+        configManager.set_config('ANTHROPIC_API_KEY', os.getenv('ANTHROPIC_API_KEY'))
         configManager.set_config('BARD_API_KEY', os.getenv('BARD_API_KEY'))
 
     def ask(self, prompt, replacements) -> APIResponse:
@@ -49,9 +49,9 @@ class BaseBotCommunicator:
         replacements: dict[str, str] = {'last_error_message': last_error_message, 'retry_count': str(retry_count)}
         return self.ask(prompt_template, replacements)
 
-    def ask_retry_examples(self, class_name) -> APIResponse:
+    def ask_retry_examples(self, class_names) -> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_retry_example')
-        replacements: dict[str, str] = {'class_name': class_name, 'example_retry': 'True'}
+        replacements = {'class_name': ', '.join(str(name) for name in class_names), 'example_retry': 'True'}
         return self.ask(prompt_template, replacements)
 
     def ask_for_docstrings(self, source_code, retry_count=1) -> APIResponse:
@@ -61,6 +61,10 @@ class BaseBotCommunicator:
 
     def ask_missing_docstrings(self, class_names, retry_count=1) -> APIResponse:
         prompt_template = Utility.load_prompt('prompts/prompt_missingDocStrings')
-        replacements: dict[str, str] = {'function_names': json.dumps(class_names), 'retry_count': str(retry_count)}
+        replacements: dict[str, str] = {
+            'function_names': json.dumps(class_names),
+            'retry_count': str(retry_count),
+            'ask_missing': 'True'
+        }
         return self.ask(prompt_template, replacements)
 

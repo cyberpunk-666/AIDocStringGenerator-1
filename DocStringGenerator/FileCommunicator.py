@@ -21,11 +21,16 @@ class FileCommunicator(BaseBotCommunicator):
         super().__init__()
 
     def ask(self, prompt, replacements) -> APIResponse:
+        formatted_prompt = self.format_prompt(prompt, replacements)
         working_directory = os.getcwd()
         response_index: str = replacements.get('retry_count', '')
         example_retry: str = replacements.get('example_retry', 'False')
+        ask_missing = replacements.get('ask_missing', 'False')
+
         base_bot_file: str = self.config.get('model', '')
-        if example_retry == 'True':
+        if ask_missing == 'True':
+            bot_file = f'{base_bot_file}.missing.json'
+        elif example_retry == 'True':
             bot_file = f'{base_bot_file}.example.json'
         else:
             response_index_str = '' if response_index == '1' else response_index

@@ -1,10 +1,7 @@
 import json
+import unittest
 import os
 import sys
-current_directory = os.getcwd()
-print(sys.path)
-print("Current Working Directory:", current_directory)
-import unittest
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
@@ -183,10 +180,10 @@ def decorated_function(param):
 
 
 
-class ClaudeDocStringGeneratorTest(DocStringGeneratorTest):
+class AnthropicDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
-        ConfigManager().set_config("bot", "claude")
+        ConfigManager().set_config("bot", "anthropic")
         ConfigManager().set_config("model", "claude-2.1")
         self.communicator_manager.initialize_bot_communicator()
 
@@ -196,18 +193,21 @@ class OpenAIDocStringGeneratorTest(DocStringGeneratorTest):
 
         ConfigManager().set_config("bot", "openai")
         ConfigManager().set_config("model", "gpt-4-1106-preview")
+        self.communicator_manager.initialize_bot_communicator()        
 
 class BardDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
         ConfigManager().set_config("bot", "bard")
-        ConfigManager().set_config("model", "")        
+        ConfigManager().set_config("model", "")  
+        self.communicator_manager.initialize_bot_communicator()              
 
 class FileDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
         ConfigManager().set_config("bot", "file")
         ConfigManager().set_config("model", "")
+        self.communicator_manager.initialize_bot_communicator()        
 
 if __name__ == '__main__':
     unittest.main()

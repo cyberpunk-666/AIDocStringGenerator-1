@@ -100,15 +100,17 @@ class DocstringProcessor:
         return '\n'.join(formatted_docstring)
 
             
-    def validate_response(self, json_object, example_only=False, max_length=999) -> APIResponse:
+    def validate_response(self, json_object, example_only=False, ask_missing=False, max_length=999) -> APIResponse:
         try:
             if self.config.get('verbose', ""):
                 print("Validating docstrings...")
-
+            
+            docstrings = {}
             # Validate docstrings
-            docstrings = json_object.get("docstrings", {})
-            if not isinstance(docstrings, dict):
-                return APIResponse(json_object, False, "Invalid format: 'docstrings' should be a dictionary.")
+            if not ask_missing:
+                docstrings = json_object.get("docstrings", {})
+                if not isinstance(docstrings, dict):
+                    return APIResponse(json_object, False, "Invalid format: 'docstrings' should be a dictionary.")
             
             if not example_only:
                 # Validate each class and global functions
@@ -165,19 +167,21 @@ class DocstringProcessor:
 
         return merged_data
 
-    def extract_docstrings(self, responses, example_only = False) -> APIResponse:
+    def extract_docstrings(self, responses, example_only = False, ask_missing=False) -> APIResponse:
         # Merge responses before validity check
         json_responses = []
         if isinstance(responses, list):
             for response in responses:
-                parse_json_response: APIResponse = Utility.parse_json(response)
+                content = response["content"]
+                parse_json_response: APIResponse = Utility.parse_json(content)
                 json_object = parse_json_response.content
                 if not parse_json_response.is_valid:
                     return parse_json_response
 
                 json_responses.append(json_object)
         else:
-            parse_json_response: APIResponse = Utility.parse_json(responses)
+            content = responses
+            parse_json_response: APIResponse = Utility.parse_json(content)
             json_object = parse_json_response.content
             if not parse_json_response.is_valid:
                 return parse_json_response
@@ -187,7 +191,8 @@ class DocstringProcessor:
         merged_response = self.merge_json_objects(json_responses)
 
         # Check the validity of the merged response
-        response = self.validate_response(merged_response, example_only)
+        max_length=self.config.get('max_line_length', 999)
+        response = self.validate_response(merged_response, example_only, ask_missing, max_length)
         if not response.is_valid:
             return response           
 

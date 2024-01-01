@@ -21,7 +21,7 @@ class BardCommunicator(BaseBotCommunicator):
         super().__init__()
         api_key = self.config.get('BARD_API_KEY', '')
         genai.configure(api_key=api_key)
-        self.bard = genai.GenerativeModel('gemini-pro')
+        self.bard = genai. GenerativeModel('gemini-pro')
 
     def ask(self, prompt, replacements):
         formatted_prompt = self.format_prompt(prompt, replacements)

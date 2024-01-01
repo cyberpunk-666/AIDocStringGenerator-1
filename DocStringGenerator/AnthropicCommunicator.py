@@ -14,26 +14,26 @@ from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 
-class ClaudeCommunicator(BaseBotCommunicator):
+class AnthropicCommunicator(BaseBotCommunicator):
 
     def __init__(self):
         self.config = ConfigManager().config
         super().__init__()
-        self.claude_url = 'https://api.anthropic.com/v1/complete'
+        self.anthropic_url = 'https://api.anthropic.com/v1/complete'
 
     def ask(self, prompt, replacements):
         for key, value in replacements.items():
             prompt = prompt.replace(f'{{{key}}}', value)
-        claude_prompt = 'Human: ' + prompt + '\n\nAssistant:'
-        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': self.config.get('CLAUDE_API_KEY')}
+        anthropic_prompt = 'Human: ' + prompt + '\n\nAssistant:'
+        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': self.config.get('ANTHROPIC_API_KEY')}
         model = self.config.get('model', '')
         models = BOTS[self.config.get('bot', '')]
         if model not in models:
             print(f'Invalid bot: {model}')
             return
-        data = {'model': model, 'prompt': claude_prompt, 'max_tokens_to_sample': 4000, 'stream': True}
+        data = {'model': model, 'prompt': anthropic_prompt, 'max_tokens_to_sample': 4000, 'stream': True}
         try:
-            response = requests.post(self.claude_url, headers=headers, data=json.dumps(data), stream=True)
+            response = requests.post(self.anthropic_url, headers=headers, data=json.dumps(data), stream=True)
             return self.handle_response(response)
         except Exception as e:
             raise e

@@ -25,13 +25,13 @@
 <text text-anchor="middle" x="802.38" y="-27.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">DocStringGenerator.</text>
 <text text-anchor="middle" x="802.38" y="-15.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">BaseBotCommunicator</text>
 </g>
-<!-- AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator -->
+<!-- AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator -->
 <g id="node3" class="node">
-<title>AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#a44646" stroke="black" cx="263.38" cy="-31.11" rx="80.26" ry="31.11"/>
 <text text-anchor="middle" x="263.38" y="-39.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">AIDocStringGenerator.</text>
 <text text-anchor="middle" x="263.38" y="-27.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">DocStringGenerator.</text>
-<text text-anchor="middle" x="263.38" y="-15.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">ClaudeCommunicator</text>
+<text text-anchor="middle" x="263.38" y="-15.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">AnthropicCommunicator</text>
 </g>
 <!-- AIDocStringGenerator_DocStringGenerator_CommunicatorManager -->
 <g id="node4" class="node">
@@ -104,9 +104,9 @@
 <path fill="none" stroke="black" d="M594.38,-179.48C618.63,-141.07 620.83,-126.51 656.38,-98.23 678.29,-80.79 705.54,-66.85 730.54,-56.34"/>
 <polygon fill="#10f96d" stroke="black" points="731.78,-59.21 739.72,-52.2 729.14,-52.73 731.78,-59.21"/>
 </g>
-<!-- dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator -->
+<!-- dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator -->
 <g id="edge4" class="edge">
-<title>dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M419.3,-223.8C402.05,-215.05 378.94,-200.45 366.38,-180.48"/>
 <path fill="none" stroke="black" d="M366.38,-179.48C346.33,-147.61 363.03,-129.71 342.38,-98.23 334.25,-85.83 323.1,-74.53 311.74,-64.92"/>
 <polygon fill="#10f96d" stroke="black" points="314.45,-61.8 304.48,-58.23 310.05,-67.24 314.45,-61.8"/>
@@ -157,9 +157,9 @@
 <path fill="none" stroke="black" d="M626.67,-218.46C647.65,-193.04 691.99,-140.24 732.38,-98.23 742.26,-87.95 753.32,-77.19 763.68,-67.4"/>
 <polygon fill="#0667f9" stroke="black" points="765.54,-70.52 770.44,-61.13 760.75,-65.41 765.54,-70.52"/>
 </g>
-<!-- openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator -->
+<!-- openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator -->
 <g id="edge11" class="edge">
-<title>openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M591.33,-224.86C568.25,-215.67 532.25,-199.8 504.38,-180.48 460.91,-150.35 462.53,-127.35 418.38,-98.23 392.39,-81.08 361.22,-66.76 333.67,-55.89"/>
 <polygon fill="#0667f9" stroke="black" points="335.29,-52.37 324.7,-52.04 332.76,-58.9 335.29,-52.37"/>
 </g>
@@ -204,9 +204,9 @@
 <title>requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_BaseBotCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M543.28,-222.61C560.44,-213.79 582.27,-199.66 594.38,-180.48"/>
 </g>
-<!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator -->
+<!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator -->
 <g id="edge18" class="edge">
-<title>requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_ClaudeCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_AnthropicCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M493.35,-222.73C488.1,-220.58 482.58,-218.4 477.38,-216.48 428.72,-198.53 399.85,-220.1 366.38,-180.48"/>
 </g>
 <!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_CommunicatorManager -->

@@ -4,7 +4,6 @@ import os
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
-from DocStringGenerator.CodeProcessor import CodeProcessor
 from dotenv import load_dotenv
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DocstringProcessor import DocstringProcessor

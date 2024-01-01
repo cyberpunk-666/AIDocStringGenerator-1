@@ -1,4 +1,10 @@
 import unittest
+import os
+import sys
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(f"{parent}")
+
 from unittest.mock import patch, mock_open, Mock
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.CodeProcessor import CodeProcessor
@@ -36,8 +42,9 @@ class TestAIDocStringGenerator(unittest.TestCase):
         # Prepare mock responses for different retry attempts
         file_content_map = {
             "classTest.response.json": 'Invalid Response',
-            "classTest.response2.json": '{"docstrings": {"classTest":{"example":"Bad Code","docstring":"This is a class"}}}', 
+            "classTest.response2.json": '{"docstrings": {"classTest":{"methods":{"test_method":"Description 1"},"example":"Bad Code","docstring":"This is a class"}}}', 
             "classTest.example.json": '{"docstrings": {"classTest":{"example":"print(\'Hello, world!\')"}}}', 
+            "classTest.missing.json": '{"docstrings": {"classTest":{"methods":{"test_method2":"Description 2"}}}}', 
             ".ENV":""
             # Add more mock responses as needed
         }
@@ -54,6 +61,7 @@ class TestAIDocStringGenerator(unittest.TestCase):
             self.assertTrue(response.is_valid)
             self.assertIn ('This is a class', response.content)
             self.assertIn ('Hello, world!', response.content)
+            self.assertIn ('Description 2', response.content)
 
 
 if __name__ == '__main__':

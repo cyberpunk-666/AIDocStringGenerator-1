@@ -8,7 +8,7 @@ AIDocStringGenerator.egg-info/entry_points.txt
 AIDocStringGenerator.egg-info/top_level.txt
 DocStringGenerator/BardCommunicator.py
 DocStringGenerator/BaseBotCommunicator.py
-DocStringGenerator/ClaudeCommunicator.py
+DocStringGenerator/AnthropicCommunicator.py
 DocStringGenerator/CodeProcessor.py
 DocStringGenerator/CommunicatorManager.py
 DocStringGenerator/ConfigManager.py

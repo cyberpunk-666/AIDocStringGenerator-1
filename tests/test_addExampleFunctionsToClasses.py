@@ -9,6 +9,7 @@ sys.path.append(f"{parent}")
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.Utility import Utility
 from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from dotenv import load_dotenv
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
@@ -17,7 +18,7 @@ from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from pathlib import Path
 
-dependencies = DependencyContainer()
+
 class test_addExampleFunctionsToClasses(unittest.TestCase):
     def setUp(self):
         load_dotenv()

@@ -7,6 +7,5 @@
   "files.exclude": {
     "build": true,
     "dist": true
-  },
-  "python.envFile": "${workspaceFolder}/.env"  
+  } 
 }

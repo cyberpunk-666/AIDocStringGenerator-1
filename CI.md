@@ -34,7 +34,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics 
     - name: Test with pytest
       env:
-        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         python -m unittest discover
         pytest 
@@ -43,12 +43,12 @@ jobs:
         AIDocStringGenerator --path "$GITHUB_WORKSPACE/path/to/source" \
                              --verbose \
                              --wipe_docstrings \
-                             --bot "claude" \
+                             --bot "anthropic" \
                              --include_subfolders \
                              --verbosity_level "5" \
                              --BARD_API_KEY ${{ secrets.BARD_API_KEY }} \
                              --OPENAI_API_KEY ${{ secrets.OPENAI_API_KEY }} \
-                             --CLAUDE_API_KEY ${{ secrets.CLAUDE_API_KEY }} 
+                             --ANTHROPIC_API_KEY ${{ secrets.ANTHROPIC_API_KEY }} 
     - name: Configure Git
       run: |
         git config --global user.email "you@example.com"
