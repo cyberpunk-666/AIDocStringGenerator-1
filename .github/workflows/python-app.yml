@@ -39,6 +39,7 @@ jobs:
     # Test with pytest
     - name: Test with pytest
       env:
+        RUNNING_IN_CI: true,
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         python -m unittest discover
@@ -60,8 +61,8 @@ jobs:
     # Configure Git
     - name: Configure Git
       run: |
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
+        git config --global user.email "fantasiiio@hotmail.com"
+        git config --global user.name "Francois girard"
 
     # Commit and Push Changes
     - name: Commit and Push Changes
