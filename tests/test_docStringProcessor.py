@@ -99,7 +99,8 @@ Ensure the response follows the specified format and reflects the appropriate le
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator        
 
     def test_extract_docstrings(self):
-        response = self.docstring_processor.extract_docstrings([TestDocstringProcessor.response])
+        
+        response = self.docstring_processor.extract_docstrings([{'content':TestDocstringProcessor.response}])
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
 
@@ -118,7 +119,7 @@ class TestExtractDocstrings(unittest.TestCase):
 
     def test_extract_docstrings(self):
         
-        responses = ["""
+        responses = [{'content':"""
 ```json
 {
     "docstrings": {
@@ -132,7 +133,7 @@ class TestExtractDocstrings(unittest.TestCase):
     }
 }
 ```
-"""]
+"""}]
         config = {"verbose": False}
         response = self.docstring_processor.extract_docstrings(responses)
         self.assertEqual(response.error_message, "")
@@ -141,14 +142,16 @@ class TestExtractDocstrings(unittest.TestCase):
         assert response.content == {'MyClass': {'docstring': 'A basic placeholder class for demonstration purposes.', 'example': 'my_object = MyClass()\nmy_object.my_method()', 'methods': {'my_method': 'A placeholder method that does nothing.'}}}
 
     def test_extract_docstrings_valid(self):
-        responses = ['{"docstrings": {"class1":{"docstring":""}}}']
+        responses = [{'content':'{"docstrings": {"class1":{"docstring":""}}}'}]
+        
         response = self.docstring_processor.extract_docstrings(responses)
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
         self.assertEqual(response.content, {'class1': {'docstring': ''}})
 
     def test_extract_docstrings_invalid(self):
-        responses = ['invalid json response']
+        responses = [{'content':'invalid json response'}]
+        
         response = self.docstring_processor.extract_docstrings(responses)
         self.assertFalse(response.is_valid)
 # Add more tests as needed

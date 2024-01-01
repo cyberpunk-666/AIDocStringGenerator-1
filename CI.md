@@ -33,8 +33,6 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics 
     - name: Test with pytest
-      env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         python -m unittest discover
         pytest 
@@ -43,10 +41,10 @@ jobs:
         AIDocStringGenerator --path "$GITHUB_WORKSPACE/path/to/source" \
                              --verbose \
                              --wipe_docstrings \
-                             --bot "anthropic" \
+                             --bot "google" \
+                             --model "bard" \
                              --include_subfolders \
-                             --verbosity_level "5" \
-                             --BARD_API_KEY ${{ secrets.BARD_API_KEY }} \
+                             --GOOGLE_API_KEY ${{ secrets.GOOGLE_API_KEY }} \
                              --OPENAI_API_KEY ${{ secrets.OPENAI_API_KEY }} \
                              --ANTHROPIC_API_KEY ${{ secrets.ANTHROPIC_API_KEY }} 
     - name: Configure Git

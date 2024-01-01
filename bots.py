@@ -7,5 +7,7 @@ BOTS = {
         "claude-2.1"
     },
     "file": {},
-    "bard": {}
+    "google": {
+        "bard"
+    }
 }

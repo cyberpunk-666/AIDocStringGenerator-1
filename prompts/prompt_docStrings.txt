@@ -38,7 +38,7 @@ JSON response format:
     "docstrings": {
         "ClassName": {
             "docstring": "Class description",
-            "example": "Code example",
+            "example": "Valid Code example\\nLine 2",
             "methods": {
                 "function_name": "Function description"
             }
@@ -55,6 +55,6 @@ Additional notes:
 
 Double backslashes for line breaks: Use \\n for line breaks in examples and docstrings.
 Verbosity levels: Guide the level of detail in docstrings and examples (see definitions above).
-Example: Provide a code example for the main class or a key function.
-Please carefully parse the code to accurately identify and document global functions, ensuring their proper placement within the â€śglobal_functionsâ€ť section of the JSON response.
+Example: Provide a code example for the main class or a key function. The example should be a valid python code only, it will be parser by the compiler.
+Please carefully parse the code to accurately identify and document global functions, ensuring their proper placement within the "global_functions" section of the JSON response.
 

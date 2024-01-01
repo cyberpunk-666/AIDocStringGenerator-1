@@ -99,7 +99,17 @@ class DocstringProcessor:
 
         return '\n'.join(formatted_docstring)
 
-            
+    def _validate_function_docstring(self, methods, max_length=999) -> APIResponse:
+        for method_name, method_doc in methods.items():
+            if not isinstance(method_doc, str):
+                return APIResponse(None, False, f"Invalid format: Method '{method_name}' docstring should be a string.")
+            for line in method_doc.splitlines():
+                if len(line) > max_length:
+                    return APIResponse(None, False, f"Docstring line in '{method_name}' exceeds maximum length of {max_length} characters.")
+
+        return APIResponse(None, True)
+        
+
     def validate_response(self, json_object, example_only=False, ask_missing=False, max_length=999) -> APIResponse:
         try:
             if self.config.get('verbose', ""):
@@ -118,15 +128,22 @@ class DocstringProcessor:
                     if key == "global_functions":
                         if not isinstance(value, dict):
                             return APIResponse(json_object, False, f"Invalid format: Global functions under '{key}' should be a dictionary.")
+                        else:
+                            response = self._validate_function_docstring(value)
+                            if not response.is_valid:
+                                return response
+                        
                     else:
                         if not isinstance(value, dict) or "docstring" not in value:
                             return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
                         if "methods" in value and not isinstance(value["methods"], dict):
                             return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
-
+                        response = self._validate_function_docstring(value.get("methods", {}))
+                        if not response.is_valid:
+                            return response
                     # Check docstring length
                     docstring = value.get('docstring', "")
-                    for line in docstring.split("\n"):
+                    for line in docstring.splitlines():
                         if len(line) > max_length:
                             return APIResponse(json_object, False, f"Docstring line in '{key}' exceeds maximum length of {max_length} characters.")
 
@@ -141,7 +158,6 @@ class DocstringProcessor:
             return APIResponse(json_object, False, f"JSON decoding error encountered. {e}")
 
         return APIResponse(json_object, True, "Response validated successfully.")
-
 
     
     def deep_merge_dict(self, dct1, dct2):

@@ -1,0 +1,7 @@
+{
+    "docstrings": {
+        "Calculator": {
+            "example": "calculator = Calculator()\\nresult = calculator.add(1, 2)\\nprint(result)  # Prints 3\\n"
+        }
+    }
+}

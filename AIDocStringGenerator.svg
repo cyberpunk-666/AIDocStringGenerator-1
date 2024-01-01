@@ -9,13 +9,13 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 256.48)">
 <title>G</title><style>.edge>path:hover{stroke-width:8}</style>
 <polygon fill="white" stroke="none" points="-4,4 -4,-256.48 1354.63,-256.48 1354.63,4 -4,4"/>
-<!-- AIDocStringGenerator_DocStringGenerator_BardCommunicator -->
+<!-- AIDocStringGenerator_DocStringGenerator_GoogleCommunicator -->
 <g id="node1" class="node">
-<title>AIDocStringGenerator_DocStringGenerator_BardCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>AIDocStringGenerator_DocStringGenerator_GoogleCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#a44646" stroke="black" cx="1162.38" cy="-31.11" rx="80.26" ry="31.11"/>
 <text text-anchor="middle" x="1162.38" y="-39.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">AIDocStringGenerator.</text>
 <text text-anchor="middle" x="1162.38" y="-27.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">DocStringGenerator.</text>
-<text text-anchor="middle" x="1162.38" y="-15.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">BardCommunicator</text>
+<text text-anchor="middle" x="1162.38" y="-15.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">GoogleCommunicator</text>
 </g>
 <!-- AIDocStringGenerator_DocStringGenerator_BaseBotCommunicator -->
 <g id="node2" class="node">
@@ -90,9 +90,9 @@
 <ellipse fill="#10f96d" stroke="black" cx="441.38" cy="-234.48" rx="27" ry="18"/>
 <text text-anchor="middle" x="441.38" y="-230.98" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">dotenv</text>
 </g>
-<!-- dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator -->
+<!-- dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator -->
 <g id="edge2" class="edge">
-<title>dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>dotenv&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M461.89,-222.47C466.85,-220.18 472.21,-218.01 477.38,-216.48 535.22,-199.4 708.24,-227.2 746.38,-180.48"/>
 <path fill="none" stroke="black" d="M746.38,-179.48C752.09,-172.48 975.65,-95.65 1092.62,-55.8"/>
 <polygon fill="#10f96d" stroke="black" points="1093.57,-58.83 1101.91,-52.29 1091.31,-52.2 1093.57,-58.83"/>
@@ -145,9 +145,9 @@
 <ellipse fill="#0667f9" stroke="black" cx="614.38" cy="-234.48" rx="27" ry="18"/>
 <text text-anchor="middle" x="614.38" y="-230.98" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">openai</text>
 </g>
-<!-- openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator -->
+<!-- openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator -->
 <g id="edge9" class="edge">
-<title>openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>openai&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M1162.38,-119.85C1161.2,-104.73 1160.94,-88.09 1161.06,-73.4"/>
 <polygon fill="#0667f9" stroke="black" points="1164.57,-73.66 1161.22,-63.61 1157.57,-73.56 1164.57,-73.66"/>
 </g>
@@ -194,9 +194,9 @@
 <ellipse fill="#c806f9" stroke="black" cx="518.38" cy="-234.48" rx="32.17" ry="18"/>
 <text text-anchor="middle" x="518.38" y="-230.98" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">requests</text>
 </g>
-<!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator -->
+<!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator -->
 <g id="edge16" class="edge">
-<title>requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_BardCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_GoogleCommunicator</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M546.36,-225.14C556.42,-222.26 567.87,-219.09 578.38,-216.48 652.49,-198.06 698.09,-239.64 746.38,-180.48"/>
 </g>
 <!-- requests&#45;&gt;AIDocStringGenerator_DocStringGenerator_BaseBotCommunicator -->

@@ -6,7 +6,7 @@ AIDocStringGenerator.egg-info/SOURCES.txt
 AIDocStringGenerator.egg-info/dependency_links.txt
 AIDocStringGenerator.egg-info/entry_points.txt
 AIDocStringGenerator.egg-info/top_level.txt
-DocStringGenerator/BardCommunicator.py
+DocStringGenerator/GoogleCommunicator.py
 DocStringGenerator/BaseBotCommunicator.py
 DocStringGenerator/AnthropicCommunicator.py
 DocStringGenerator/CodeProcessor.py

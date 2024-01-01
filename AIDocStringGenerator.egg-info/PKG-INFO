@@ -73,7 +73,7 @@ The Docstring Generator is particularly useful for:
 -   **verbose:**  Enable verbose output if set to  `true`.
 -   **bot:**  Specify the AI bot to use (options include  `gpt3.5`,  `gpt4`,  `gpt4-120k`,  `anthropic`,  `file`).
 -   **bot_response_file:**  This parameter allows you to specify the base name of a single file that contains pre-defined responses, located in the "responses" folder. The tool reads and uses responses from this file and its sequentially numbered parts (if any), such as  `file_name.response.json`,  `file_name.response2.json`,  `file_name.response3.json`, etc. This setup is ideal for testing and debugging with predetermined, multi-part responses when direct interaction with an AI bot is not feasible.
--   **BARD_API_KEY`,`OPENAI_API_KEY`,`ANTHROPIC_API_KEY:**  API keys for the respective AI services.
+-   **GOOGLE_API_KEY`,`OPENAI_API_KEY`,`ANTHROPIC_API_KEY:**  API keys for the respective AI services.
 -   **include_subfolders:**  Set to  `true`  to include subfolders in processing.
 -   **class_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for classes. Valid values are 0-5, with higher values indicating more detailed docstrings.
 -   **function_docstrings_verbosity_level:**  Controls the level of detail in the generated docstrings for functions. Valid values are 0-5, with higher values indicating more detailed docstrings.
@@ -134,14 +134,14 @@ steps:
                          --bot "anthropic" \
                          --include_subfolders \
                          --verbosity_level "5" \
-                         --BARD_API_KEY ${{ secrets.BARD_API_KEY }} \
+                         --GOOGLE_API_KEY ${{ secrets.GOOGLE_API_KEY }} \
                          --OPENAI_API_KEY ${{ secrets.OPENAI_API_KEY }} \
                          --ANTHROPIC_API_KEY ${{ secrets.ANTHROPIC_API_KEY }}
 ```  
 
  In this GitHub Actions example:    
     -   `$GITHUB_WORKSPACE` is an environment variable indicating the workspace directory.
-    -   `secrets.BARD_API_KEY`, `secrets.OPENAI_API_KEY`, and `secrets.ANTHROPIC_API_KEY` are GitHub Actions secrets containing the API keys.
+    -   `secrets.GOOGLE_API_KEY`, `secrets.OPENAI_API_KEY`, and `secrets.ANTHROPIC_API_KEY` are GitHub Actions secrets containing the API keys.
     
 4.  **Setting Up Secrets in GitHub Actions**:
     
@@ -191,7 +191,7 @@ JSON
     "include_subfolders": false,
     "wipe_docstrings": true,
     "verbose": true,
-    "BARD_API_KEY": "",
+    "GOOGLE_API_KEY": "",
     "OPENAI_API_KEY": "",
     "ANTHROPIC_API_KEY": "",
     "keep_responses": false,

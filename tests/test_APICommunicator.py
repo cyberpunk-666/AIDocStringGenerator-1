@@ -29,6 +29,8 @@ class DocStringGeneratorTest(unittest.TestCase):
             self.skipTest("Skipping tests in base class")
         self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
         self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager") 
+        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor") 
+
         self.config = ConfigManager().config
 
 
@@ -48,7 +50,7 @@ class DocStringGeneratorTest(unittest.TestCase):
         # Configuring a short max_line_length for testing
         ConfigManager().set_config('max_line_length', 50)
         sample_code = "class MyClass:\n    def my_method(self):\n        pass"
-        response = self.communicator_manager.send_code_in_parts(sample_code)
+        response = self.code_processor.process_code(sample_code)
 
         self.assertEqual(response.error_message, "")
         self.assertTrue(response.is_valid)
@@ -58,10 +60,10 @@ class DocStringGeneratorTest(unittest.TestCase):
 
         #response_data = json.loads(response.content)
         #docstrings = response_data.get('docstrings', {})
-        response = dependencies.resolve("DocstringProcessor").extract_docstrings(response.content)
+        extract_docstrings_response = dependencies.resolve("DocstringProcessor").extract_docstrings(response.content)
 
-        self.assertEqual(response.error_message, "")
-        self.assertTrue(response.is_valid)
+        self.assertEqual(extract_docstrings_response.error_message, "")
+        self.assertTrue(extract_docstrings_response.is_valid)
 
         for class_name, class_info in response.content.items():
             if class_name != 'global_functions':
@@ -74,7 +76,7 @@ class DocStringGeneratorTest(unittest.TestCase):
 
     def test_empty_code_input(self):
         # Test behavior with empty Python code input
-        response = self.communicator_manager.send_code_in_parts("")
+        response = self.code_processor.process_code("")
         # Expecting an empty or specific response for empty input
         self.assertNotEqual(response, "")
 
@@ -164,8 +166,9 @@ def decorated_function(param):
     pass
 """
         response = self.code_processor.process_code(sample_code)
-        json_response = response.content
-        self.assertIn("decorated_function", json_response["global_functions"])
+        response_valid = self.code_processor.verify_code_docstrings(response.content)
+        self.assertTrue(response_valid.is_valid)
+
 
     def test_docstring_format_consistency(self):
         # Test if the docstring format is consistent across various elements
@@ -195,10 +198,10 @@ class OpenAIDocStringGeneratorTest(DocStringGeneratorTest):
         ConfigManager().set_config("model", "gpt-4-1106-preview")
         self.communicator_manager.initialize_bot_communicator()        
 
-class BardDocStringGeneratorTest(DocStringGeneratorTest):
+class GoogleDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
-        ConfigManager().set_config("bot", "bard")
+        ConfigManager().set_config("bot", "google")
         ConfigManager().set_config("model", "")  
         self.communicator_manager.initialize_bot_communicator()              
 

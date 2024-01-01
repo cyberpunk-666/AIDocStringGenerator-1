@@ -19,7 +19,7 @@ from DocStringGenerator.DependencyContainer import DependencyContainer
 from DocStringGenerator.ConfigManager import ConfigManager
 
 FILES_PROCESSED_LOG = "files_processed.log"
-MAX_RETRY_LIMIT = 2
+MAX_RETRY_LIMIT = 3
 
 class DocstringChecker(ast.NodeVisitor):
     """AST visitor that checks for the presence of docstrings in functions."""
@@ -29,7 +29,7 @@ class DocstringChecker(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node):
         """Visit a function definition and check if it has a docstring."""
-        if not ast.get_docstring(node):
+        if not ast.get_docstring(node) and not "example_" in node.name:
             self.missing_docstrings.append(node.name)
         self.generic_visit(node)  # Continue traversing child nodes
 
@@ -140,7 +140,7 @@ class CodeProcessor:
         with open(FILES_PROCESSED_LOG, 'a') as log_file:
             log_file.write(filename + '\n')
 
-    def removed_from_processed_log(self, file_path):
+    def remove_from_processed_log(self, file_path):
         filename = file_path.name
         with open(FILES_PROCESSED_LOG, 'r') as log_file:
             processed_files = log_file.read().splitlines()
@@ -239,10 +239,11 @@ class CodeProcessor:
                     break
             
 
-        if not response_docstrings.is_valid:
+        if response_docstrings.is_valid:
+            final_code_response = self.process_examples(source_code, response_docstrings)
+        else:
             return response_docstrings
         
-        final_code_response = self.process_examples(source_code, response_docstrings)
         if final_code_response.is_valid:
             source_code = final_code_response.content
             verify_response = self.verify_code_docstrings(source_code)
@@ -270,55 +271,54 @@ class CodeProcessor:
         if final_code_response.is_valid:
             with open(bot_path, 'w') as file:
                 file.write(final_code_response.content)
-            self.log_processed_file(bot_path)
+            if not ConfigManager().config.get('disable_log_processed_file', False):                
+                self.log_processed_file(bot_path)
 
     def process_examples(self, source_code, response_docstrings: APIResponse) -> APIResponse:
         if response_docstrings.is_valid:
             parsed_examples = self.parse_examples_from_docstrings(response_docstrings.content)
             if parsed_examples.is_valid:
-                add_example_response = self.add_example_functions_to_classes(source_code, parsed_examples.content)
+                response = self.add_example_functions_to_classes(source_code, parsed_examples.content)
 
-                if add_example_response.is_valid:
-                    return APIResponse(add_example_response.content, True)
+                if response.is_valid:
+                    return APIResponse(response.content, True)
                 else:
-                    failed_function_names = add_example_response.content
-                    retry_examples_response = self.ask_retry_examples(failed_function_names)
-
-                    if retry_examples_response.is_valid:
-                        extract_docstrings_response: APIResponse = self.docstring_processor.extract_docstrings(retry_examples_response.content, True)
-                        if extract_docstrings_response.is_valid:
-                            new_parsed_examples = self.parse_examples_from_docstrings(extract_docstrings_response.content)
-                            if new_parsed_examples.is_valid:
-                                add_example_response = self.add_example_functions_to_classes(source_code, new_parsed_examples.content)                   
-                                return add_example_response
+                    ask_count = 0
+                    last_error_message = response.error_message
+                    bot_communicator = self.communicator_manager.bot_communicator 
+                    while True:
+                        if bot_communicator:
+                            response = bot_communicator.ask_retry_examples(response.content, last_error_message)
+                            if response.is_valid:
+                                response: APIResponse = self.docstring_processor.extract_docstrings(response.content, True)
+                                if response.is_valid:
+                                    response = self.parse_examples_from_docstrings(response.content)
+                                    if response.is_valid:
+                                        response = self.add_example_functions_to_classes(source_code, response.content)
+                                        if response.is_valid:
+                                            return APIResponse(response.content, True)
+                                        else:
+                                            last_error_message = response.error_message
+                                            ask_count += 1
+                                    else:
+                                        last_error_message = response.error_message
+                                        ask_count += 1
+                                else:
+                                    last_error_message = response.error_message
+                                    ask_count += 1
                             else:
-                                return new_parsed_examples
-                        else:
-                            return extract_docstrings_response
-                    else:
-                        return retry_examples_response
+                                last_error_message = response.error_message
+                                ask_count += 1
+
+                            if ask_count == MAX_RETRY_LIMIT:
+                                break
+
+                    return response                      
             else:
                 return parsed_examples                    
         else:
             return response_docstrings
-         
-    def ask_retry_examples(self, failed_function_names) -> APIResponse:
-        """
-        Requests a retry for generating examples for specific class names.
-        :param failed_function_names: List of function names for which examples failed to generate.
-        :return: APIResponse object with the result of the retry attempt.
-        """
-        bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
-        if not bot_communicator:
-            return APIResponse("", False, "Bot communicator not available.")
 
-        # Request the bot communicator to retry generating examples for the failed functions
-        retry_response = bot_communicator.ask_retry_examples(failed_function_names)
-
-        if not retry_response.is_valid:
-            return APIResponse("", False, "Failed to retrieve new examples.")
-
-        return retry_response
 
     def try_generate_docstrings(self, source_code, retry_count=1, last_error_message="") -> APIResponse:
         """Attempts to generate docstrings, retrying if necessary."""
@@ -394,6 +394,8 @@ class CodeProcessor:
         parsed_examples = {}
         try:
             for class_or_func_name, content in docstrings.items():
+                if class_or_func_name == "global_functions":
+                    continue
                 # Extract the example for the class or function
                 class_example = content.get("example")
                 if class_example:
@@ -404,7 +406,6 @@ class CodeProcessor:
         except Exception as e:
             return APIResponse("", False, f"Failed to parse examples from response: {e}")
 
-    
 
     def add_example_functions_to_classes(self, code_source, examples) -> APIResponse:
         success = True
@@ -424,31 +425,27 @@ class CodeProcessor:
                     example_code = example_code.replace("\\n", "\n")
                     validation_code = f"def example_function_{class_name}(self):\n{self.add_indentation(example_code, 1)}"
                     if not Utility.is_valid_python(validation_code):
-                        if self.config.get('verbose', ""):
-                            print(f"Invalid example code for class {class_name}.")
+                        error_message = f"Invalid example code for class {class_name}."
                         success = False
-                        failed_class_names.append(class_name)
+                        failed_class_names.append({"class": class_name, "error": error_message})
                         continue  # Keep processing other classes
 
                     function_def_str = f"\n    def example_function_{class_name}(self):\n{self.add_indentation(example_code, 2)}"
                     content_lines.insert(end_line_number, function_def_str)
                     code_source = "\n".join(content_lines)
                 else:
-                    if self.config.get('verbose', ""):
-                        print(f"Class {class_name} not found.")
+                    error_message = f"Class {class_name} not found."
                     success = False
-                    failed_class_names.append(class_name)
+                    failed_class_names.append({"class": class_name, "error": error_message})
 
             except Exception as e:
-                if self.config.get('verbose', ""):
-                    print(f"Failed to append example to class {class_name}: {e}")
+                error_message = f"Failed to append example to class {class_name}: {e}"
                 success = False
-                failed_class_names.append(class_name)
-
+                failed_class_names.append({"class": class_name, "error": error_message})  
+                      
         if not success:
             return APIResponse(failed_class_names, False, "Failed to add example functions to some classes.")
         return APIResponse(code_source, True)
-
 
 
 

@@ -1,2 +1,16 @@
-I’m noticing missing docstrings for the following functions. Please provide concise descriptions of their purpose and functionality:
+I'm noticing missing docstrings for the following functions. Please provide concise descriptions of their purpose and functionality in the following format:
+{
+    "docstrings": {
+        "ClassName": {
+            "methods": {
+                "function_name": "Function description"
+            }
+        },
+        "global_functions": {
+            "global_function_name": "Global function description"
+        }
+    }
+}
+
+Functions names:
 {function_names}

@@ -1,2 +1,12 @@
-Sorry, the example for class {class_name} in previous response has syntax error, or indentation error.
-Please re-send example again in the correct format.
+Sorry, some example in previous response has error:
+Here is error messages:
+{class_errors}
+
+Please re-send example again in the correct format:
+{
+    "docstrings": {
+        "ClassName": {
+            "example": "Valid Code example\\nLine 2"
+        }
+    }
+}

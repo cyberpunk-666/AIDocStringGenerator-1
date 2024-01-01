@@ -61,7 +61,7 @@ class TestClass:
         config = {"verbose": False}
         response = self.code_processor.add_example_functions_to_classes(self.file_path, examples)
         self.assertFalse(response.is_valid)
-        self.assertIn("NonExistentClass", response.content)    
+        self.assertIn("NonExistentClass", response.error_message)    
 
     def test_append_multiple_classes(self):
         # Add content for multiple classes to the temp file
@@ -138,7 +138,7 @@ class OuterClass:
         code_source = Path(self.file_path).read_text()
         response= self.code_processor.add_example_functions_to_classes(code_source, examples)
         self.assertFalse(response.is_valid)
-        self.assertIn("TestClass", response.content)
+        self.assertIn("TestClass", response.error_message)
 
     def test_append_multiline_function(self):
         # Define a multi-line function example

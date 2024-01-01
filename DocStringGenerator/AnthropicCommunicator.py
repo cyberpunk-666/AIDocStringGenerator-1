@@ -20,29 +20,40 @@ class AnthropicCommunicator(BaseBotCommunicator):
         self.config = ConfigManager().config
         super().__init__()
         self.anthropic_url = 'https://api.anthropic.com/v1/complete'
+        self.prompt = ''
 
-    def ask(self, prompt, replacements):
-        for key, value in replacements.items():
-            prompt = prompt.replace(f'{{{key}}}', value)
-        anthropic_prompt = 'Human: ' + prompt + '\n\nAssistant:'
-        headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': self.config.get('ANTHROPIC_API_KEY')}
-        model = self.config.get('model', '')
-        models = BOTS[self.config.get('bot', '')]
-        if model not in models:
-            print(f'Invalid bot: {model}')
-            return
-        data = {'model': model, 'prompt': anthropic_prompt, 'max_tokens_to_sample': 4000, 'stream': True}
-        try:
+    def ask(self, prompt, replacements) -> APIResponse:
+
+        prompt_response = self.format_prompt(prompt, replacements)
+        if not prompt_response.is_valid:
+            return prompt_response
+        
+        try:            
+            new_prompt = '\n\nHuman: ' + prompt_response.content + '\n\nAssistant:'
+            if self.config.get('verbose', False):
+                print("sending prompt: " + new_prompt)
+            
+            self.prompt += new_prompt
+            headers = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': self.config.get('ANTHROPIC_API_KEY')}
+            model = self.config.get('model', '')
+            models = BOTS[self.config.get('bot', '')]
+            if model not in models:
+                print(f'Invalid bot: {model}')
+                return APIResponse('', False, 'Invalid bot')
+            data = {'model': model, 'prompt': self.prompt, 'max_tokens_to_sample': 4000, 'stream': True}
             response = requests.post(self.anthropic_url, headers=headers, data=json.dumps(data), stream=True)
-            return self.handle_response(response)
+            response_handled = self.handle_response(response)
+            return response_handled
         except Exception as e:
-            raise e
+            return APIResponse(None, is_valid=False, error_message=str(e))
 
-    def handle_response(self, response):
+    def handle_response(self, response) -> APIResponse:
         first_block_received = False
         full_completion = ''
         error_message = ''
         try:
+            if self.config.get('verbose', False):
+                print("Receiving response from Anthropic API...")
             for line in response.iter_lines():
                 if line:
                     current_time: float = time.time()

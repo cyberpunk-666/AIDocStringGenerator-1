@@ -1,0 +1,15 @@
+{
+    "docstrings": {
+        "Calculator": {
+            "docstring": "A simple class that performs basic arithmetic operations.",
+            "example": "Create a calculator object and use it to perform operations:\\n\\n```python\\ncalculator = Calculator()\\nresult = calculator.add(1, 2)\\nprint(result)  # Prints 3\\n```",
+            "methods": {
+                "add": "Adds two numbers together and returns the result.",
+                "subtract": "Subtracts two numbers and returns the result.",
+                "multiply": "Multiplies two numbers together and returns the result.",
+                "divide": "Divides two numbers and returns the result. Raises a ValueError if the divisor is zero."
+            }
+        },
+        "global_functions": {}
+    }
+}

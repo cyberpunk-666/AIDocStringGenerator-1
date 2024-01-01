@@ -33,6 +33,7 @@ def main():
 
     config_manager = ConfigManager()
     config = config_manager.load_or_create_config()
+    config_manager.update_config(config)
 
     # Override config with command line arguments
     for arg in vars(args):
@@ -52,16 +53,24 @@ def main():
     if enabled_bots:
         # If multiple bots are enabled, we will process the code with each of them
         # and then compare the results to find the best one
+        index = 0
         for bot_info in enabled_bots:
+            if index < len(enabled_bots) - 1:
+                config_manager.set_config('disable_log_processed_file', True)
+            else:
+                config_manager.set_config('disable_log_processed_file', False)
+                
             bot = bot_info['bot']
             model = bot_info.get('model')
             switch_bot(bot, model)
+            # code_processor.remove_from_processed_log()
             response = code_processor.process_folder_or_file()
             if not response.is_valid:
                 failed_files = response.content
                 for file in failed_files:
                     print(f"Failed to process {file.file_name}")
                     print(f"Error message: {file.response}")
+            index += 1
     
 if __name__ == '__main__':
     main()

@@ -54,7 +54,7 @@ class TestDocstringProcessor(unittest.TestCase):
 
     def test_extract_docstrings2(self):
         # Test validation of a JSON response
-        valid_response = '{"docstrings": {"MyClass": {"exemple": "example code", "docstring": "Class docstring", "methods": {"my_method": "Method docstring"}}}}'        
+        valid_response ={'content': '{"docstrings": {"MyClass": {"exemple": "example code", "docstring": "Class docstring", "methods": {"my_method": "Method docstring"}}}}', 'source_code': ''}
         self.assertTrue(self.processor.extract_docstrings([valid_response]))
 
 
