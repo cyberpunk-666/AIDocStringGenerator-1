@@ -1,5 +1,7 @@
 import os
 import platform
+import sys; print(sys.path)
+print(os.getcwd())
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer

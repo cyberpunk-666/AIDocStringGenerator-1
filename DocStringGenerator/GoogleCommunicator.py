@@ -21,7 +21,7 @@ class GoogleCommunicator(BaseBotCommunicator):
         super().__init__()
         api_key = self.config.get('GOOGLE_API_KEY', '')
         genai.configure(api_key=api_key)
-        self.google = genai. GenerativeModel('gemini-pro')
+        self.google = genai.GenerativeModel('gemini-pro')
 
     def ask(self, prompt, replacements) -> APIResponse:
         formatted_prompt_response = self.format_prompt(prompt, replacements)

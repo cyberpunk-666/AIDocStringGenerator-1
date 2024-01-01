@@ -72,15 +72,15 @@
 <text text-anchor="middle" x="1270.38" y="-123.35" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">AIDocStringGenerator.</text>
 <text text-anchor="middle" x="1270.38" y="-111.35" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">__main__</text>
 </g>
-<!-- AIDocstringGenerator -->
+<!-- AIDocStringGenerator -->
 <g id="node9" class="node">
-<title>AIDocstringGenerator</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>AIDocStringGenerator</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#a2b653" stroke="black" cx="1270.38" cy="-234.48" rx="65.55" ry="18"/>
-<text text-anchor="middle" x="1270.38" y="-230.98" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">AIDocstringGenerator</text>
+<text text-anchor="middle" x="1270.38" y="-230.98" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">AIDocStringGenerator</text>
 </g>
-<!-- AIDocstringGenerator&#45;&gt;AIDocStringGenerator___main__ -->
+<!-- AIDocStringGenerator&#45;&gt;AIDocStringGenerator___main__ -->
 <g id="edge1" class="edge">
-<title>AIDocstringGenerator&#45;&gt;AIDocStringGenerator___main__</title><style>.edge>path:hover{stroke-width:8}</style>
+<title>AIDocStringGenerator&#45;&gt;AIDocStringGenerator___main__</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M1270.38,-216.04C1270.38,-199.66 1270.38,-174.74 1270.38,-154.65"/>
 <polygon fill="#a2b653" stroke="black" points="1273.88,-154.77 1270.38,-144.77 1266.88,-154.77 1273.88,-154.77"/>
 </g>

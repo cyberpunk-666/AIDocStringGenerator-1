@@ -5,10 +5,10 @@ AIDocStringGenerator.egg-info/PKG-INFO
 AIDocStringGenerator.egg-info/SOURCES.txt
 AIDocStringGenerator.egg-info/dependency_links.txt
 AIDocStringGenerator.egg-info/entry_points.txt
+AIDocStringGenerator.egg-info/requires.txt
 AIDocStringGenerator.egg-info/top_level.txt
-DocStringGenerator/GoogleCommunicator.py
-DocStringGenerator/BaseBotCommunicator.py
 DocStringGenerator/AnthropicCommunicator.py
+DocStringGenerator/BaseBotCommunicator.py
 DocStringGenerator/CodeProcessor.py
 DocStringGenerator/CommunicatorManager.py
 DocStringGenerator/ConfigManager.py
@@ -17,6 +17,7 @@ DocStringGenerator/DependencyContainer.py
 DocStringGenerator/DocstringProcessor.py
 DocStringGenerator/EmptyCommunicator.py
 DocStringGenerator/FileCommunicator.py
+DocStringGenerator/GoogleCommunicator.py
 DocStringGenerator/OpenAICommunicator.py
 DocStringGenerator/ResultThread.py
 DocStringGenerator/Spinner.py
@@ -34,3 +35,5 @@ tests/test_generateDoctstring.py
 tests/test_generateDoctstring2.py
 tests/test_insertDccstrings.py
 tests/test_retryMechanisms.py
+tests/test_validateResponse.py
+tests/test_verifyCodeDocstrings.py

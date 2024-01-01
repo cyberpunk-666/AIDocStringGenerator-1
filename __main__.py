@@ -1,6 +1,6 @@
-from AIDocstringGenerator import main
+import os
+import sys
+from AIDocStringGenerator import main
 
 if __name__ == "__main__":
-    # write the current directory
-    print("Current directory: ", __file__)
     main()  
