@@ -183,6 +183,7 @@ def decorated_function(param):
 
 
 
+@unittest.skipIf(os.environ.get('RUNNING_IN_CI') == 'true', "Skipping this test in CI environment")
 class AnthropicDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
@@ -190,6 +191,7 @@ class AnthropicDocStringGeneratorTest(DocStringGeneratorTest):
         ConfigManager().set_config("model", "claude-2.1")
         self.communicator_manager.initialize_bot_communicator()
 
+@unittest.skipIf(os.environ.get('RUNNING_IN_CI') == 'true', "Skipping this test in CI environment")
 class OpenAIDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
@@ -198,6 +200,7 @@ class OpenAIDocStringGeneratorTest(DocStringGeneratorTest):
         ConfigManager().set_config("model", "gpt-4-1106-preview")
         self.communicator_manager.initialize_bot_communicator()        
 
+@unittest.skipIf(os.environ.get('RUNNING_IN_CI') == 'true', "Skipping this test in CI environment")
 class GoogleDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
@@ -205,6 +208,7 @@ class GoogleDocStringGeneratorTest(DocStringGeneratorTest):
         ConfigManager().set_config("model", "")  
         self.communicator_manager.initialize_bot_communicator()              
 
+@unittest.skipIf(os.environ.get('RUNNING_IN_CI') == 'true', "Skipping this test in CI environment")
 class FileDocStringGeneratorTest(DocStringGeneratorTest):
     def setUp(self):
         super().setUp()
