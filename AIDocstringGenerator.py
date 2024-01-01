@@ -3,6 +3,7 @@ import platform
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer
+from DocStringGenerator.CommunicatorManager import CommunicatorManager
 
 dependencies = DependencyContainer()
 from pathlib import Path
@@ -16,24 +17,17 @@ def clear_screen():
     else:
         os.system('clear')
 
+
+def switch_bot(bot, model):
+    # Set bot and model configuration
+    ConfigManager().set_config("bot", bot)
+    ConfigManager().set_config("model", model)
+    communicator_manager = dependencies.resolve("CommunicatorManager")
+    communicator_manager.initialize_bot_communicator()
+
 def main():
     parser = argparse.ArgumentParser(description='DocString Generator Configuration')
-    parser.add_argument('--path', type=str, help='Path to process')
-    parser.add_argument('--wipe_docstrings', action='store_true', help='Wipe existing docstrings')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
-    parser.add_argument('--bot', type=str, choices=['claude', 'other_bot'], help='Choose the bot for processing')
-    parser.add_argument('--bot_response_file', type=str, help='File for storing bot responses')
-    parser.add_argument('--include_subfolders', action='store_true', help='Process subfolders')
-    parser.add_argument('--verbosity_level', type=str, help='Set verbosity level')
-    parser.add_argument('--BARD_API_KEY', type=str, help='API key for Bard')
-    parser.add_argument('--OPENAI_API_KEY', type=str, help='API key for OpenAI')
-    parser.add_argument('--CLAUDE_API_KEY', type=str, help='API key for Claude')
-    parser.add_argument('--keep_responses', action='store_true', help='Keep responses in the output')
-    parser.add_argument('--ignore', type=str, help='Specify patterns to ignore')
-    parser.add_argument('--class_docstrings_verbosity_level', type=int, default=5, help='Verbosity level for class docstrings')
-    parser.add_argument('--function_docstrings_verbosity_level', type=int, default=2, help='Verbosity level for function docstrings')
-    parser.add_argument('--example_verbosity_level', type=int, default=3, help='Verbosity level for examples')
-    parser.add_argument('--max_line_length', type=int, default=79, help='Maximum line length for formatting')    
+    # Add argument definitions here (if any)
 
     args = parser.parse_args()
 
@@ -44,15 +38,30 @@ def main():
     for arg in vars(args):
         value = getattr(args, arg)
         if value:
-            config[arg] = value        
+            config[arg] = value
 
-    code_processor = dependencies.resolve("CodeProcessor")
-    response = code_processor.process_folder_or_file()
-    if not response.is_valid:
-        failed_files = response.content
-        for file in failed_files:
-            print(f"Failed to process {file.file_name}")
-            print(f"Error message: {file.response}")
+    # Handling enabled_bots
+    enabled_bots = config.get('enabled_bots', [])
 
+    # Include 'bot' and 'model' from command line args if provided
+    if 'bot' in config and config['bot']:
+        enabled_bots.append({'bot': config['bot'], 'model': config.get('model')})
+
+    code_processor = CodeProcessor()
+
+    if enabled_bots:
+        # If multiple bots are enabled, we will process the code with each of them
+        # and then compare the results to find the best one
+        for bot_info in enabled_bots:
+            bot = bot_info['bot']
+            model = bot_info.get('model')
+            switch_bot(bot, model)
+            response = code_processor.process_folder_or_file()
+            if not response.is_valid:
+                failed_files = response.content
+                for file in failed_files:
+                    print(f"Failed to process {file.file_name}")
+                    print(f"Error message: {file.response}")
+    
 if __name__ == '__main__':
     main()

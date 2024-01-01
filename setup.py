@@ -10,9 +10,6 @@ setup(
     author='Francois Girard',
     author_email='fantasiiio@hotmail.com',
     url='https://github.com/fantasiiio/AIDocStringGenerator',
-    install_requires=[
-       # All my dependencies
-    ],
     entry_points={
         'console_scripts': [
             'AIDocstringGenerator = AIDocstringGenerator:main',

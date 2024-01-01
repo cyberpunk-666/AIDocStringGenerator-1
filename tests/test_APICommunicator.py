@@ -1,5 +1,9 @@
 import json
 import os
+import sys
+current_directory = os.getcwd()
+print(sys.path)
+print("Current Working Directory:", current_directory)
 import unittest
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.CodeProcessor import CodeProcessor
@@ -8,6 +12,9 @@ from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from pathlib import Path
 from DocStringGenerator.ConfigManager import ConfigManager
+from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
+
 from dotenv import load_dotenv
 
 
