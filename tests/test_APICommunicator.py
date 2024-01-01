@@ -5,6 +5,9 @@ current_directory = os.getcwd()
 print(sys.path)
 print("Current Working Directory:", current_directory)
 import unittest
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(f"{parent}")
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.CommunicatorManager import CommunicatorManager
