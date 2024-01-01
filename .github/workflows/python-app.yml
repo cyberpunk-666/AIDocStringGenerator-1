@@ -48,7 +48,7 @@ jobs:
     # Run AIDocStringGenerator
     - name: Run AIDocStringGenerator
       run: |
-        AIDocStringGenerator --path "$GITHUB_WORKSPACE" \
+        python AIDocStringGenerator.py --path "$GITHUB_WORKSPACE" \
                              --verbose \                             
                              --bot "openai" \
                              --model "gpt-4-1106-preview" \
