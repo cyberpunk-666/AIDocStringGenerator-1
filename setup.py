@@ -11,6 +11,7 @@ setup(
     author_email='fantasiiio@hotmail.com',
     url='https://github.com/fantasiiio/AIDocStringGenerator',
     install_requires=[
+        'AIDocStringGenerator',
         "annotated-types==0.6.0",
         "anyio==4.2.0",
         "cachetools==5.3.2",
@@ -52,7 +53,7 @@ setup(
     ],    
     entry_points={
         'console_scripts': [
-            'AIDocStringGenerator=AIDocStringGenerator:AIDocStringGenerator.main'
+            'AIDocStringGenerator=AIDocStringGenerator.AIDocStringGenerator:main'
         ]
     }   
 )

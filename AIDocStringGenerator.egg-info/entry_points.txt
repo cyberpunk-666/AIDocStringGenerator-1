@@ -1,2 +1,2 @@
 [console_scripts]
-AIDocStringGenerator = AIDocStringGenerator:AIDocStringGenerator.main
+AIDocStringGenerator = AIDocStringGenerator.AIDocStringGenerator:main
