@@ -263,7 +263,8 @@ This command processes Python files located at the specified path, with verbose 
 
 If you start the program without providing command-line arguments, it will automatically look for a configuration file named `config.json` in the current working directory. This file allows you to specify the processing parameters in a structured format.
 
-    
+### Known issue
+it's important to note that sometimes chatbots may have difficulty understanding the "max_line_length" configuration. If you encounter issues where the bot struggles with this setting, it is recommended to either remove this configuration or set it to a high value like 999. This adjustment can help in ensuring smoother operation and better compatibility with the bot's understanding and processing of your code for docstring generation.     
 
 ## Advanced Usage
 
