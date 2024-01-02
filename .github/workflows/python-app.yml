@@ -47,29 +47,4 @@ jobs:
         pytest
         
 
-    # Run AIDocStringGenerator
-    - name: Run AIDocStringGenerator
-      run: |
-        python -m pip install --upgrade pip
-        pip install -v .
-        AIDocStringGenerator --path "$GITHUB_WORKSPACE" \
-                             --verbose \                             
-                             --bot "openai" \
-                             --model "gpt-4-1106-preview" \
-                             --include_subfolders \
-                             --google_api_key ${{ secrets.GOOGLE_API_KEY }} \
-                             --openai_api_key ${{ secrets.OPENAI_API_KEY }} \
-                             --anthropic_api_key ${{ secrets.ANTHROPIC_API_KEY }}
 
-    # Configure Git
-    - name: Configure Git
-      run: |
-        git config --global user.email "fantasiiio@hotmail.com"
-        git config --global user.name "Francois girard"
-
-    # Commit and Push Changes
-    - name: Commit and Push Changes
-      run: |
-        git add .
-        git commit -m "Update docstrings via AIDocStringGenerator"
-        git push
