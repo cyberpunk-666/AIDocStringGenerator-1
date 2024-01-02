@@ -1,7 +1,8 @@
 import os
 import platform
-import sys; print(sys.path)
-print(os.getcwd())
+import sys
+current = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(f"{current}")
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.DependencyContainer import DependencyContainer

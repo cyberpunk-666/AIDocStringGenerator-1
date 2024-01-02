@@ -2,11 +2,12 @@ import json
 import unittest
 import os
 import sys
-from unittest import mock
-
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(f"{parent}")
+from unittest import mock
+
+
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.CodeProcessor import CodeProcessor
 from DocStringGenerator.CommunicatorManager import CommunicatorManager

@@ -6,7 +6,7 @@ charset-normalizer==3.3.2
 colorama==0.4.6
 distro==1.9.0
 exceptiongroup==1.2.0
-google-ai-generativelanguage
+google-ai-generativelanguage==0.4.0
 google-api-core==2.15.0
 google-auth==2.25.2
 google-generativeai==0.3.2
