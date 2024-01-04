@@ -5,3 +5,4 @@ build
 .env
 config.json
 dist
+DocStringGenerator/AIDocStringGenerator.py

@@ -1,11 +1,8 @@
 import os
-import ast
 from pathlib import Path
-from typing import Any, Dict 
-from DocStringGenerator.Spinner import Spinner
 import json
-import re
 from dataclasses import dataclass
+from typing import Any
 
 @dataclass
 class APIResponse:
@@ -21,7 +18,7 @@ class Utility:
     """
 
     @staticmethod
-    def extract_json(input_string) -> APIResponse:
+    def extract_json(input_string: str) -> APIResponse:
         """
         Extracts valid JSON string from input text, checking for
         balanced braces and valid JSON format. Returns tuple
@@ -66,14 +63,13 @@ class Utility:
         return APIResponse(found_json_string, is_valid, error_message)
 
     @staticmethod
-    def parse_json(text) -> APIResponse:
+    def parse_json(text: str) -> APIResponse:
         """
         Tries to parse a JSON string from given text input. Handles
         errors and returns tuple with parsed object or None, 
         validity boolean and error message if any.
         """
         json_object = None
-        is_valid = True
         error_message = None
         json_string = ""
         try:
@@ -91,7 +87,7 @@ class Utility:
         
 
     @staticmethod
-    def read_config(config_path: Path) -> dict:
+    def read_config(config_path: Path) -> dict[str, Any]:
         """
         Reads given config file path as JSON and returns
         parsed config dict.
@@ -99,43 +95,21 @@ class Utility:
         return json.loads(config_path.read_text())
 
     @staticmethod
-    def load_prompt(file, base_path='.') -> str:
+    def load_prompt(file_name: str, base_path: str='.') -> str:
         """
         Loads text content from a file in base path, handling
         new lines.
         """
-        file_path = os.path.join(base_path, file)
+        file_path = os.path.join(base_path, file_name)
         with open(f'{file_path}.txt', 'r') as file:
             return file.read()
 
-    @staticmethod
-    def convert_newlines(content):
-        """
-        Converts new line escapes in a string to actual
-        new line characters.
-        """
-        try:
-            return ast.literal_eval(f"'{content}'")
-        except (ValueError, SyntaxError):
-            return content
 
     @staticmethod
-    def is_valid_python(code, config=None) -> bool:
+    def is_valid_python(code: str) -> APIResponse:
         """Checks if given Python code text is valid syntactically."""
         try:
             compile(code, '<string>', 'exec')
-            return True
+            return APIResponse(True, True)
         except SyntaxError as e:
-            if config and config.get('verbose', ""):
-                print(f'Invalid Python code: {e}')
-            return False
-
-    def example_function_Utility(self):
-        prompt = Utility.load_prompt('prompt_file')
-        print(Utility.convert_newlines(prompt))
-
-    def print_long_string(self, long_string):
-        n = 1000  # number of characters to display at a time
-
-        for i in range(0, len(long_string), n):
-            print(long_string[i:i+n], "")         
+            return APIResponse(False, False, str(e))

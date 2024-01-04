@@ -21,7 +21,7 @@ class TestCodeSplitter(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.code_splitter = dependencies.resolve("CodeProcessor")
+        self.code_splitter = dependencies.resolve(CodeProcessor)
 
     def test_split_simple_code(self):
         code = "line1\nline2\nline3\nline4"

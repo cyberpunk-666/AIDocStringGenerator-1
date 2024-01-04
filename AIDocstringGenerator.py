@@ -25,7 +25,7 @@ def switch_bot(bot, model):
     # Set bot and model configuration
     ConfigManager().set_config("bot", bot)
     ConfigManager().set_config("model", model)
-    communicator_manager = dependencies.resolve("CommunicatorManager")
+    communicator_manager = dependencies.resolve(CommunicatorManager)
     communicator_manager.initialize_bot_communicator()
 
 def main():

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot Interface</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+    <div class="container">
+        <form id="botSelectionForm">
+            <h2>Choose Chatbots:</h2>
+            <div style="margin-bottom: 40px;">
+                {% for bot_name in available_bot_names %}
+                <label class="custom-checkbox">{{ bot_name | capitalize }}
+                    <input type="checkbox" id="chatbot_{{ bot_name }}" name="chatbot" value="{{ bot_name }}" onclick="toggleChatbotSection('{{ bot_name }}')">
+                    <span class="checkmark"></span>
+                </label>
+                {% endfor %}
+            </div>
+            <h2>Verbosity:</h2>
+            <div class="verbosity-settings">
+                <div class="verbosity-setting">
+                    <label for="class-doc-verbosity">Class Docstrings Verbosity Level:</label>
+                    <input type="range" id="class-doc-verbosity" name="class_doc_verbosity" min="0" max="5" value="5">
+                    <span id="class-doc-verbosity-value">5</span>
+                    <div id="class-doc-verbosity-desc" class="verbosity-desc"></div>
+                </div>
+                
+                <div class="verbosity-setting">
+                    <label for="function-doc-verbosity">Function Docstrings Verbosity Level:</label>
+                    <input type="range" id="function-doc-verbosity" name="function_doc_verbosity" min="0" max="5" value="2">
+                    <span id="function-doc-verbosity-value">2</span>
+                    <div id="function-doc-verbosity-desc" class="verbosity-desc"></div>
+                </div>
+            
+                <div class="verbosity-setting">
+                    <label for="example-verbosity">Example Verbosity Level:</label>
+                    <input type="range" id="example-verbosity" name="example_verbosity" min="0" max="5" value="3">
+                    <span id="example-verbosity-value">3</span>
+                    <div id="example-verbosity-desc" class="verbosity-desc"></div>
+                </div>
+            </div>
+            
+
+            <div class="textarea-group">
+                <label for="code">Paste your code here:</label>
+                <div id="editor" class="code"></div> <!-- Ace Editor will be initialized here -->
+            </div>
+            <button type="submit">Run</button>
+        </form>
+
+        <!-- Error Messages Display -->
+        <div id="error_messages" class="error-messages"></div>
+
+        {% for bot_name in available_bot_names %}
+        <div class="bot-container" id="chatbot_{{ bot_name }}_container" style="display: none;">
+            <h3>{{ bot_name }} Stream</h3>
+            <div id="chatbot_{{ bot_name }}_messages" class="stream-output"></div>
+            <h3>{{ bot_name }} Processed Code</h3>
+            <div id="chatbot_{{ bot_name }}_processed_code" class="processed-code-output"></div>
+        </div>
+        {% endfor %}
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -26,9 +26,9 @@ class test_addExampleFunctionsToClasses(unittest.TestCase):
         # Create a temporary file to use for testing
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.py', mode='w+')
         
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
-        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager)
+        self.docstring_processor: DocstringProcessor = dependencies.resolve(DocstringProcessor)
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
 
         self.file_path = self.temp_file.name

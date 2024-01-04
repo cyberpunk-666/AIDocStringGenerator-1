@@ -9,7 +9,7 @@ dependencies = DependencyContainer()
 
 class TestWipeDocstrings(unittest.TestCase):
     def setUp(self) -> None:
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
 
     def test_remove_docstrings(self):
         source = '''

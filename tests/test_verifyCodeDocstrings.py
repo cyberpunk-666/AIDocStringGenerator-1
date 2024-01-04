@@ -14,7 +14,7 @@ dependencies = DependencyContainer()
 class TestVerifyCodeDocstrings(unittest.TestCase):
 
     def setUp(self):
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")        
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)        
         # Setup that runs before each test
         self.function_to_test = self.code_processor.verify_code_docstrings
 

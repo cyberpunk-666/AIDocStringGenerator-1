@@ -1,15 +1,34 @@
-from typing import Optional
+from typing import Union, Callable, Generic
+from typing import Any, Type, TypeVar, Dict, Optional
+from enum import Enum, auto
 import threading
-from typing import Type, Callable, Dict, Tuple
+from flask import session
+from flask.sessions import SessionMixin
+
+T = TypeVar('T')
+
+class Scope(Enum):
+    SINGLETON = auto()
+    SCOPED = auto()
+    TRANSIENT = auto()
 
 class DependencyNotRegisteredError(KeyError):
-    """Exception raised when a dependency is not registered."""
     pass
 
+class SingletonWrapper(Generic[T]):
+    def __init__(self, cls: Callable[..., T]) -> None:
+        self.cls: Callable[..., T] = cls
+        self._singleton_instance: Optional[T] = None
+
+    def __call__(self, *args: Any, **kwargs: Any) -> T:
+        if self._singleton_instance is None:
+            self._singleton_instance = self.cls(*args, **kwargs)
+        return self._singleton_instance
+
+    
 class DependencyContainer:
     _instance: Optional['DependencyContainer'] = None
-    _lock = threading.Lock()
-
+    _lock: Any = threading.Lock()
 
     def __new__(cls):
         with cls._lock:
@@ -19,81 +38,36 @@ class DependencyContainer:
 
     def __init__(self):
         if not hasattr(self, '_is_initialized') or not self._is_initialized:
-            self.dependencies: Dict[Type, Tuple[Callable, bool]] = {}
+            self.dependencies: Dict[Type[Any], tuple[Callable[..., Any], Scope]] = {}
             self._is_initialized = True
 
-    def register(self, interface, implementation, singleton=True):
-        self.dependencies[interface] = (implementation, singleton)
 
-    def resolve(self, interface, *args, **kwargs):      
+    def register(self, interface: Type[T], implementation: Union[Callable[..., T], SingletonWrapper[T]], scope: Scope = Scope.SINGLETON):
+        self.dependencies[interface] = (implementation, scope)
+
+
+    def resolve(self, interface: Type[T], *args: Any, **kwargs: Any) -> T:
         implementation_info = self.dependencies.get(interface)
-        if implementation_info:
-            implementation, singleton = implementation_info
-            if singleton:
-                if not hasattr(implementation, "_singleton_instance"):
-                    implementation._singleton_instance = implementation(*args, **kwargs)
-                return implementation._singleton_instance
-            else:
-                return implementation(*args, **kwargs)
-        else:
+        if not implementation_info:
             raise DependencyNotRegisteredError(f"No implementation registered for {interface}")
 
+        implementation, scope = implementation_info
+        if scope == Scope.SINGLETON:
+            return implementation(*args, **kwargs)
+        elif scope == Scope.SCOPED:
+            _scoped_instances: Dict[Type[T], T] = session.get('_scoped_instances', [])
+            if isinstance(session, SessionMixin) and _scoped_instances is None:
+                _scoped_instances = {}
+                session['_scoped_instances'] = _scoped_instances
 
-
-
-    def example_1(self):
-        # Import necessary classes and modules
-        # from dependency_container import DependencyContainer, DependencyNotRegisteredError
-
-        # Step 1: Define an Interface and its Implementation
-        # ---------------------------------------------------
-
-        # Define a simple interface (or abstract class) for demonstration
-        class Communicator:
-            def send_message(self, message):
-                raise NotImplementedError
-
-        # Define an implementation of the Communicator interface
-        class EmailCommunicator(Communicator):
-            def send_message(self, message):
-                print(f"Sending email: {message}")
-
-        # Step 2: Register the Implementation with DependencyContainer
-        # ------------------------------------------------------------
-
-        # Create an instance of the DependencyContainer
-        container = DependencyContainer()
-
-        # Register the EmailCommunicator as the implementation for the Communicator interface
-        # Here, we specify that EmailCommunicator should be treated as a singleton
-        container.register(Communicator, EmailCommunicator)
-
-        # Step 3: Resolve the Dependency and Use It
-        # ------------------------------------------
-
-        # Resolve the dependency from the container
-        # This will return an instance of EmailCommunicator
-        email_communicator = container.resolve(Communicator)
-
-        # Use the resolved communicator instance to send a message
-        email_communicator.send_message("Hello World!")
-
-        # Note: The following line will raise an exception if uncommented, 
-        # as no implementation is registered for the 'str' type.
-        # container.resolve(str)
-
-        # Additional Usage: Registering Non-Singleton Implementations
-        # -----------------------------------------------------------
-
-        # Define another implementation of the Communicator interface
-        class SMSCommunicator(Communicator):
-            def send_message(self, message):
-                print(f"Sending SMS: {message}")
-
-        # Register SMSCommunicator as a non-singleton implementation
-        container.register(Communicator, SMSCommunicator, singleton=False)
-
-        # Resolving this will give a new instance each time
-        sms_communicator = container.resolve(Communicator)
-        sms_communicator.send_message("Text Message")
-
+            if _scoped_instances:
+                scoped_instances: Dict[Type[T], T] = _scoped_instances
+                if interface not in scoped_instances:
+                    scoped_instances[interface] = implementation(*args, **kwargs)
+                return scoped_instances[interface]
+            else:
+                return implementation(*args, **kwargs)
+        elif scope == Scope.TRANSIENT:
+            return implementation(*args, **kwargs)
+        else:
+            raise ValueError(f"Unknown scope: {scope}")

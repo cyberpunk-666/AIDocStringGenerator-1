@@ -37,7 +37,7 @@ class TestAIDocStringGenerator(unittest.TestCase):
     def setUp(self):
         ConfigManager().update_config({"bot":"file","model":"classTest"})
         self.config = ConfigManager().config
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager)
         self.communicator_manager.initialize_bot_communicator()        
         # Prepare mock responses for different retry attempts
         file_content_map = {

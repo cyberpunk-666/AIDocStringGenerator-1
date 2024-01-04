@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch, ANY
 
 import re
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 import ast
 import logging
 import json
@@ -10,7 +10,10 @@ from pathlib import Path
 from json.decoder import JSONDecodeError
 import tempfile
 from DocStringGenerator.ConfigManager import ConfigManager
-from DocStringGenerator.DependencyContainer import DependencyContainer
+from DocStringGenerator.DependencyContainer import DependencyContainer, Scope
+dependencies = DependencyContainer()
+from DocStringGenerator.GlobalConfig import GlobalConfig
+global_config = dependencies.resolve(GlobalConfig)
 
 class DocstringProcessor:
     """The `DocstringProcessor` class is a singleton that provides functionality to insert docstrings into a Python source file.
@@ -31,24 +34,24 @@ class DocstringProcessor:
     def __init__(self):
         self.config = ConfigManager().config
 
-    def insert_docstrings(self, content, docstrings: Dict[str, Dict[str, str]]):
+    def insert_docstrings(self, content: str, docstrings: Dict[str, Dict[str, str]]):
 
         content_lines = content.splitlines()
         tree = ast.parse(content)
 
         insertions = self._prepare_insertions(tree, content_lines, docstrings)
 
-        new_content = []
+        new_content: list[str] = []
         for i, line in enumerate(content_lines):
             new_content.append(line)
             if i in insertions:
                 new_content.append(insertions[i])  # Properly extend the list with the docstring lines
 
-        new_content = '\n'.join(new_content)
-        return new_content
+        new_content_str: str = '\n'.join(new_content)
+        return new_content_str
 
-    def _prepare_insertions(self, tree, content_lines, docstrings):
-        insertions = {}
+    def _prepare_insertions(self, tree: ast.AST, content_lines: list[str], docstrings: dict[str, Any]) -> dict[int, str]:
+        insertions: dict[int, str] = {}
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
                 start_line = node.lineno - 1
@@ -75,15 +78,15 @@ class DocstringProcessor:
 
         return insertions
 
-    def _get_indent(self, line):
+    def _get_indent(self, line: str) -> int:
         return len(line) - len(line.lstrip())
 
-    def _format_docstring(self, docstring, indent_level):
+    def _format_docstring(self, docstring_str: str, indent_level: int):
         indent = ' ' * indent_level
 
         # Replace escaped newlines with actual newlines
-        docstring = docstring.replace('\\n', '\n')
-        docstring_lines = docstring.splitlines()
+        docstring_str = docstring_str.replace('\\n', '\n')
+        docstring_lines = docstring_str.splitlines()
 
         # If the docstring is multiline
         if len(docstring_lines) > 1:
@@ -95,14 +98,12 @@ class DocstringProcessor:
             formatted_docstring.append(f'{indent}\"\"\"')
         else:
             # If the docstring is a single line, keep it on one line with the closing triple quotes
-            formatted_docstring = [f'{indent}"""{docstring}"""']
+            formatted_docstring = [f'{indent}"""{docstring_str}"""']
 
         return '\n'.join(formatted_docstring)
 
-    def _validate_function_docstring(self, methods, max_length=999) -> APIResponse:
+    def _validate_function_docstring(self, methods: dict[str, str], max_length: int=999) -> APIResponse:
         for method_name, method_doc in methods.items():
-            if not isinstance(method_doc, str):
-                return APIResponse(None, False, f"Invalid format: Method '{method_name}' docstring should be a string.")
             for line in method_doc.splitlines():
                 if len(line) > max_length:
                     return APIResponse(None, False, f"Docstring line in '{method_name}' exceeds maximum length of {max_length} characters.")
@@ -110,12 +111,9 @@ class DocstringProcessor:
         return APIResponse(None, True)
         
 
-    def validate_response(self, json_object, example_only=False, ask_missing=False, max_length=999) -> APIResponse:
-        try:
-            if self.config.get('verbose', ""):
-                print("Validating docstrings...")
-            
-            docstrings = {}
+    def validate_response(self, json_object: Any, example_only: bool=False, ask_missing: bool=False, max_length: int=999) -> APIResponse:
+        try:            
+            docstrings: dict[str, Any] = {}
             # Validate docstrings
             if not ask_missing:
                 docstrings = json_object.get("docstrings", {})
@@ -136,7 +134,8 @@ class DocstringProcessor:
                     else:
                         if not isinstance(value, dict) or "docstring" not in value:
                             return APIResponse(json_object, False, f"Invalid format: Class '{key}' should contain a 'docstring'.")
-                        if "methods" in value and not isinstance(value["methods"], dict):
+                        methods: str = value["methods"]
+                        if "methods" in value and not isinstance(methods, dict):
                             return APIResponse(json_object, False, f"Invalid format: Methods under class '{key}' should be a dictionary.")
                         response = self._validate_function_docstring(value.get("methods", {}))
                         if not response.is_valid:
@@ -147,8 +146,6 @@ class DocstringProcessor:
                         if len(line) > max_length:
                             return APIResponse(json_object, False, f"Docstring line in '{key}' exceeds maximum length of {max_length} characters.")
 
-            if self.config.get('verbose', ""):
-                print("Validating examples...")
 
             # Validate examples
             if "examples" in json_object and not isinstance(json_object["examples"], dict):
@@ -183,7 +180,7 @@ class DocstringProcessor:
 
         return merged_data
 
-    def extract_docstrings(self, responses, example_only = False, ask_missing=False) -> APIResponse:
+    def extract_docstrings(self, responses: list[dict[str, Any]] | str, example_only: bool = False, ask_missing: bool=False) -> APIResponse:
         # Merge responses before validity check
         json_responses = []
         if isinstance(responses, list):
@@ -195,7 +192,7 @@ class DocstringProcessor:
                     return parse_json_response
 
                 json_responses.append(json_object)
-        else:
+        elif isinstance(responses, str):
             content = responses
             parse_json_response: APIResponse = Utility.parse_json(content)
             json_object = parse_json_response.content
@@ -220,5 +217,7 @@ class DocstringProcessor:
         return APIResponse("", False, "No docstrings found in response.")               
 
 
-dependencies = DependencyContainer()
-dependencies.register('DocstringProcessor', DocstringProcessor)
+if global_config.mode == "web":
+    dependencies.register(DocstringProcessor, DocstringProcessor, Scope.SCOPED)
+else:
+    dependencies.register(DocstringProcessor, DocstringProcessor, Scope.SINGLETON)

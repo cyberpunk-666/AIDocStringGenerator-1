@@ -10,6 +10,14 @@
             "justMyCode": true
         },
         {
+            "name": "Python: WebSite",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/site/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },        
+        {
             "name": "Python: File",
             "type": "python",
             "request": "launch",

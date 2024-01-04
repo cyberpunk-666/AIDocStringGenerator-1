@@ -1,1 +1,1 @@
-from .AIDocStringGenerator import main
+from AIDocStringGenerator import main

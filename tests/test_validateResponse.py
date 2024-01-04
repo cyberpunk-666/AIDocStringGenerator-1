@@ -20,8 +20,8 @@ dependencies = DependencyContainer()
 
 class TestValidateResponse(unittest.TestCase):
     def setUp(self):
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
-        self.validator: DocstringProcessor = dependencies.resolve("DocstringProcessor") 
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
+        self.validator: DocstringProcessor = dependencies.resolve(DocstringProcessor) 
         self.config = ConfigManager().config
 
     def test_valid_json_object(self):

@@ -23,7 +23,7 @@ class TestFindSplitPoint(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
         
 
     def test_normal_code(self):

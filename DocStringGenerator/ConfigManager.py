@@ -3,33 +3,38 @@ import logging
 import json
 import sys
 from typing import Any
+from DocStringGenerator.DependencyContainer import DependencyContainer, Scope
+dependencies = DependencyContainer()
+from DocStringGenerator.GlobalConfig import GlobalConfig
+global_config = dependencies.resolve(GlobalConfig)
+
 
 class ConfigManager:
     """The ConfigManager class is a singleton designed to manage configuration settings for an application. It ensures that only one instance of the ConfigManager can exist at any given time. The class provides methods to load or create a default configuration file and retrieve specific configurations, such as API keys and bot settings.\n\nAt verbosity level 5, the class docstring would include a comprehensive explanation of the class's purpose, its singleton nature, the structure of the default configuration, and the methods provided for interacting with the configuration file. It would also cover potential edge cases, such as what happens if the configuration file is missing or corrupted, and how the class handles different types of bots specified in the configuration."""
     _instance = None
     _is_initialized = False
-    DEFAULT_CONFIG = {'verbose': True}
+    DEFAULT_CONFIG: dict[str, Any]   = {'verbose': True}
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs : Any):
         if cls._instance is None:
             cls._instance = super(ConfigManager, cls).__new__(cls)
         return cls._instance
 
-    def update_config(self, new_config) -> None:
+    def update_config(self, new_config: dict[str, Any]) -> None:
         """Update the configuration with values from the provided dictionary."""
         self.config.update(new_config)
 
-    def set_config(self, key, value):
+    def set_config(self, key: str, value: Any) -> None:
         """Set a configuration value."""
         self.config[key] = value
 
-    def __init__(self, config_path: Path = Path('config.json'), initial_config: dict = DEFAULT_CONFIG):
+    def __init__(self, config_path: Path = Path('config.json'), initial_config: dict[str, Any] = DEFAULT_CONFIG):
         if not self._is_initialized:
             self.config_path = config_path
             self.config:dict[str, Any] = initial_config
             self._is_initialized = True
 
-    def load_or_create_config(self) -> dict:
+    def load_or_create_config(self) -> dict[str, Any]:
         """Load the configuration from a file or create a default configuration if the file does not exist."""
         if self.config_path.exists():
             return self.get_config() 
@@ -38,7 +43,12 @@ class ConfigManager:
             logging.info(f"Created default config at {self.config_path}")
             sys.exit(0)
 
-    def get_config(self) -> dict:
+    def get_config(self) -> dict[str, Any]:
         """Retrieve the configuration as a dictionary from the configuration file."""
         return json.loads(self.config_path.read_text())
+
+if global_config.mode == "web":
+    dependencies.register(ConfigManager, ConfigManager, Scope.SCOPED)
+else:
+    dependencies.register(ConfigManager, ConfigManager, Scope.SINGLETON)
     

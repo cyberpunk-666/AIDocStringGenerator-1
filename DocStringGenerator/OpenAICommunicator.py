@@ -9,14 +9,21 @@ from openai import OpenAI
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.Utility import *
 from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
-
+from DocStringGenerator.Logger import Logger
+class ChunkData:
+    def __init__(self, bot_name: str, chunk: str):
+        self.logger : Logger = dependencies.resolve(Logger)        
+        self.bot_name = bot_name
+        self.chunk = chunk
 class OpenAICommunicator(BaseBotCommunicator):
 
     def __init__(self):
+        self.logger : Logger = dependencies.resolve(Logger)        
         self.config = ConfigManager().config
         super().__init__()
         api_key = self.config.get('OPENAI_API_KEY', '')
@@ -32,14 +39,13 @@ class OpenAICommunicator(BaseBotCommunicator):
                 
         try:
             new_prompt= prompt_response.content
-            if self.config.get('verbose', False):
-                print("sending prompt: " + new_prompt) 
+            self.logger.log_line("sending prompt: " + new_prompt) 
 
             self.messages.append(ChatCompletionUserMessageParam(content=new_prompt,role='user'))
             model = self.config.get('model', '')
             models = BOTS[self.config.get('bot', '')]
             if model not in models:
-                print(f'Invalid bot: {model}')
+                self.logger.log_line(f'Invalid bot: {model}')
                 return APIResponse('', False, 'Invalid bot')
             
             stream = self.client.chat.completions.create(model=model, messages=self.messages, temperature=0, stream=True)
@@ -52,13 +58,11 @@ class OpenAICommunicator(BaseBotCommunicator):
 
     def handle_response(self, stream) -> APIResponse:
         response = ''
-        if self.config.get('verbose', False):
-            print("Receiving response from OpenAI API...")
+        self.logger.log_line("Receiving response from OpenAI API...")
         try:
             for chunk in stream:
                 content = chunk.choices[0].delta.content or ''
-                if self.config.get('verbose', False):
-                    print(content, end='')
+                self.logger.log(content)
                 response += content
             return APIResponse(response, True)            
         except Exception as e:

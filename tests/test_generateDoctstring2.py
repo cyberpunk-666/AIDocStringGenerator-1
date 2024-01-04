@@ -27,7 +27,7 @@ class TestAPICommunicator(unittest.TestCase):
         load_dotenv()
         
         ConfigManager().update_config({"dry_run": True,"keep_responses": False, "bot": "file", 'verbose': False, "model": "classTest"})
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager)
         self.communicator_manager.initialize_bot_communicator()
         if self.communicator_manager.bot_communicator:
             self.bot_communicator: BaseBotCommunicator = self.communicator_manager.bot_communicator
@@ -47,7 +47,7 @@ class TestDocstringProcessor(unittest.TestCase):
     def setUp(self):
         load_dotenv()
 
-        self.processor = dependencies.resolve("DocstringProcessor")
+        self.processor = dependencies.resolve(DocstringProcessor)
         self.mock_file_path = MagicMock()
         self.mock_file_path.read_text.return_value = "def test_function():\n    pass"
 

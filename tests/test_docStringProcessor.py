@@ -94,8 +94,8 @@ Ensure the response follows the specified format and reflects the appropriate le
         """
     def setUp(self):
         load_dotenv()
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
-        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager)
+        self.docstring_processor: DocstringProcessor = dependencies.resolve(DocstringProcessor)
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator        
 
     def test_extract_docstrings(self):

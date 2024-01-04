@@ -10,22 +10,24 @@ from openai import OpenAI
 from DocStringGenerator.DocstringProcessor import DocstringProcessor
 from DocStringGenerator.Utility import *
 from DocStringGenerator.DependencyContainer import DependencyContainer
+dependencies = DependencyContainer()
 from DocStringGenerator.ConfigManager import ConfigManager
 from DocStringGenerator.ResultThread import ResultThread
 from DocStringGenerator.BaseBotCommunicator import BaseBotCommunicator
+from DocStringGenerator.Logger import Logger
 
 class FileCommunicator(BaseBotCommunicator):
 
     def __init__(self):
         self.config = ConfigManager().config
+        self.logger : Logger = dependencies.resolve(Logger)        
         super().__init__()
 
     def ask(self, prompt, replacements) -> APIResponse:
         prompt_response = self.format_prompt(prompt, replacements)
         if not prompt_response.is_valid:
             return prompt_response
-        if self.config.get('verbose', False):
-            print("sending prompt: " + prompt_response.content)
+        self.logger.log_line("sending prompt: " + prompt_response.content)
 
         try:
             working_directory = os.getcwd()
@@ -46,8 +48,7 @@ class FileCommunicator(BaseBotCommunicator):
             with open(bot_file, 'r') as f:
                 response_text = f.read()
 
-            if self.config.get('verbose', False):
-                print("Receiving response from File...")                
+            self.logger.log_line("Receiving response from File...")                
             return APIResponse(response_text, True)
         except Exception as e:
             return APIResponse('', False, str(e))

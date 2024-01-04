@@ -12,7 +12,7 @@ class TestInsertDocstrings(unittest.TestCase):
         # Create a temporary file for testing
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.py', mode='w')
         self.file_path = Path(self.temp_file.name)
-        dependencies.resolve("DocstringProcessor")
+        dependencies.resolve(DocstringProcessor)
         # self.config = {"verbose": True}
 
     def test_insert_docstrings(self):
@@ -35,7 +35,7 @@ class MyClass:
         # read content of file
         with open(self.file_path, 'r') as file:
             content = file.read()
-        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        modified_response = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
         expected_content = """
 class MyClass:
@@ -69,7 +69,7 @@ class MyClass:
         }
         with open(self.temp_file.name, 'r') as file:
             content = file.read()        
-        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        modified_response = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
         
         self.assertIn("\"\"\"Comment for method_one\"\"\"", modified_response)
@@ -86,7 +86,7 @@ class MyClass:
         docstrings = {"NonExistentMethod": {"docstring": "Comment for NonExistentMethod"}}
         with open(self.temp_file.name, 'r') as file:
             content = file.read()         
-        dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
         with open(self.temp_file.name, 'r') as file:
             content = file.read()
@@ -108,7 +108,7 @@ class MyClass:
         } 
         with open(self.temp_file.name, 'r') as file:
             content = file.read()          
-        new_content = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        new_content = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
         self.assertIn("\"\"\"Comment for MyClass\"\"\"", new_content)
 
@@ -134,7 +134,7 @@ def test_function():
         self.temp_file.close()
         with open(self.temp_file.name, 'r') as file:
             content = file.read() 
-        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        modified_response = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
 
         expected_response = """
@@ -173,7 +173,7 @@ class OuterClass:
         }
         with open(self.temp_file.name, 'r') as file:
             content = file.read()         
-        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        modified_response = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
 
         expected_response = """
@@ -205,7 +205,7 @@ class MyClass:
         }
         with open(self.temp_file.name, 'r') as file:
             content = file.read()         
-        modified_response = dependencies.resolve("DocstringProcessor").insert_docstrings(content, docstrings)
+        modified_response = dependencies.resolve(DocstringProcessor).insert_docstrings(content, docstrings)
 
 
         expected_content = """

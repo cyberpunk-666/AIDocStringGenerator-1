@@ -25,12 +25,12 @@ class TestSourceCodeSplitting(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager")
-        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor")
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager)
+        self.docstring_processor: DocstringProcessor = dependencies.resolve(DocstringProcessor)
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
         self.bot_communicator: BaseBotCommunicator | None = self.communicator_manager.bot_communicator
 
-        self.instance = dependencies.resolve("CodeProcessor")
+        self.instance = dependencies.resolve(CodeProcessor)
 
     # Tests for find_split_point
     def test_split_point_valid_code(self):
@@ -132,7 +132,7 @@ class TestSourceCodeSplittingAdvanced(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.config = {"verbose": False}
-        self.instance = dependencies.resolve("CodeProcessor")
+        self.instance = dependencies.resolve(CodeProcessor)
 
     # Test with Nested Functions and Classes
     def test_nested_functions_classes(self):

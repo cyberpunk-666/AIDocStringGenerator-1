@@ -27,9 +27,9 @@ class DocStringGeneratorTest(unittest.TestCase):
     def setUp(self):
         if self.__class__ == DocStringGeneratorTest:
             self.skipTest("Skipping tests in base class")
-        self.code_processor: CodeProcessor = dependencies.resolve("CodeProcessor")
-        self.communicator_manager: CommunicatorManager = dependencies.resolve("CommunicatorManager") 
-        self.docstring_processor: DocstringProcessor = dependencies.resolve("DocstringProcessor") 
+        self.code_processor: CodeProcessor = dependencies.resolve(CodeProcessor)
+        self.communicator_manager: CommunicatorManager = dependencies.resolve(CommunicatorManager) 
+        self.docstring_processor: DocstringProcessor = dependencies.resolve(DocstringProcessor) 
 
         self.config = ConfigManager().config
 
@@ -60,7 +60,7 @@ class DocStringGeneratorTest(unittest.TestCase):
 
         #response_data = json.loads(response.content)
         #docstrings = response_data.get('docstrings', {})
-        extract_docstrings_response = dependencies.resolve("DocstringProcessor").extract_docstrings(response.content)
+        extract_docstrings_response = dependencies.resolve(DocstringProcessor).extract_docstrings(response.content)
 
         self.assertEqual(extract_docstrings_response.error_message, "")
         self.assertTrue(extract_docstrings_response.is_valid)
@@ -178,7 +178,7 @@ def decorated_function(param):
         self.assertTrue(self.is_consistent_format(json_response))
 
     def is_consistent_format(self, docstring_object):
-        return dependencies.resolve("DocstringProcessor").validate_response(docstring_object)        
+        return dependencies.resolve(DocstringProcessor).validate_response(docstring_object)        
 
 
 

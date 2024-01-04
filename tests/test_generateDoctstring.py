@@ -33,7 +33,7 @@ class TestDocStringGenerator(unittest.TestCase):
             "include_subfolders": False
         }
         ConfigManager(initial_config=self.config)
-        self.communicator = dependencies.resolve("CommunicatorManager")
+        self.communicator = dependencies.resolve(CommunicatorManager)
 
     def test_result_thread(self):
         def target_function():
@@ -46,19 +46,19 @@ class TestDocStringGenerator(unittest.TestCase):
 
     def test_find_split_point(self):
         source_code = "def function(self):\n    print('Hello, world!')\n\nprint('Goodbye, world!')"
-        split_point = dependencies.resolve("CodeProcessor").find_split_point(source_code, 3)
+        split_point = dependencies.resolve(CodeProcessor).find_split_point(source_code, 3)
         assert split_point == 2
 
     def test_split_source_code(self):
         source_code = "def function(self):\n    print('Hello, world!')\n\nprint('Goodbye, world!')"
-        part1, part2 = dependencies.resolve("CodeProcessor").split_source_code(source_code, 2)
+        part1, part2 = dependencies.resolve(CodeProcessor).split_source_code(source_code, 2)
         assert part1 == "def function(self):\n    print('Hello, world!')\n"
         assert part2 == "\nprint('Goodbye, world!')"
          
 
     def test_wipe_docstrings(self):
         source_code = "def function(self):\n    \"\"\"\n    This is a function\n    \"\"\"\n    pass\n\nclass MyClass:\n    \"\"\"\n    This is a class\n    \"\"\"    \n    pass"
-        response = dependencies.resolve("CodeProcessor").wipe_docstrings(source_code)
+        response = dependencies.resolve(CodeProcessor).wipe_docstrings(source_code)
         assert response.content == "def function(self):\n    pass\n\nclass MyClass:\n    pass"
 
 
@@ -71,8 +71,7 @@ class TestDocStringGenerator(unittest.TestCase):
             file2.write_text("print('File 2')")
 
             # Call the method under test
-            files = dependencies.resolve("CodeProcessor").list_files(Path(tmpdir), ".py")
-
+            files = dependencies.resolve(CodeProcessor).list_files(Path(tmpdir), ".py")
             # Assertions
             self.assertEqual(len(files), 2)
             self.assertIn(Path(tmpdir, "file1.py"), files)
@@ -90,9 +89,9 @@ class TestDocStringGenerator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             log_file_path = Path(tmpdir) / "test_log.txt"
             log_file_path.write_text("file1.py\nfile2.py")
-            assert dependencies.resolve("CodeProcessor").is_file_processed("file1.py", log_file_path)
-            assert dependencies.resolve("CodeProcessor").is_file_processed("file2.py", log_file_path)
-            assert not dependencies.resolve("CodeProcessor").is_file_processed("file3.py", log_file_path)
+            assert dependencies.resolve(CodeProcessor).is_file_processed("file1.py", str(log_file_path.absolute()))
+            assert dependencies.resolve(CodeProcessor).is_file_processed("file2.py", str(log_file_path.absolute()))
+            assert not dependencies.resolve(CodeProcessor).is_file_processed("file3.py", str(log_file_path.absolute()))
 
 if __name__ == '__main__':
     unittest.main()
