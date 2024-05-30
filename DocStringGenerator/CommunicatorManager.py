@@ -22,13 +22,20 @@ class CommunicatorManager:
         self.initialize_bot_communicator()
         self.bot_communicator = EmptyCommunicator()
 
+    def capitalize_first(string):
+        if not string:
+            return string
+        return string[0].upper() + string[1:]
+
     def resolve_bot_communicator(self, bot: str) -> BaseBotCommunicator:
-        class_name = f'{bot}Communicator'
+        capitalized_bot = bot
+        class_name = f'{capitalized_bot}Communicator'
         communicator_class = globals().get(class_name)
         if communicator_class:
             return dependencies.resolve(communicator_class)
         else:
             raise ValueError(f"Communicator class not found: {class_name}")
+
 
 
     def initialize_bot_communicator(self):
@@ -48,8 +55,8 @@ class CommunicatorManager:
             dependencies.register(GoogleCommunicator, GoogleCommunicator, Scope.SINGLETON)
             dependencies.register(FileCommunicator, FileCommunicator, Scope.SINGLETON)
 
-        self.resolve_bot_communicator(bot)
-        self.bot_communicator: BaseBotCommunicator = dependencies.resolve(bot)
+        communicator = self.resolve_bot_communicator(bot)
+        self.bot_communicator: BaseBotCommunicator = dependencies.resolve(communicator)
         if not self.bot_communicator:
             raise ValueError(f"Error initializing bot communicator for '{bot}'")
 

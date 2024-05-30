@@ -36,6 +36,8 @@ class AnthropicCommunicator(BaseBotCommunicator):
             
             self.prompt += new_prompt
             api_key = self.config.get('ANTHROPIC_API_KEY')
+            if not api_key:
+                return APIResponse(None, is_valid=False, error_message="No api key found")
             headers: dict[str, str] = {'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'x-api-key': api_key if api_key else ''}
             model = self.config.get('model', '')
             models: list[str] = BOTS[self.config.get('bot', '')]

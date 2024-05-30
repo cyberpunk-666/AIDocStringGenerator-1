@@ -26,7 +26,8 @@ class GoogleCommunicator(BaseBotCommunicator):
         self.config = ConfigManager().config
         super().__init__()
         api_key = self.config.get('GOOGLE_API_KEY', '')
-        genai.configure(api_key=api_key)
+        if api_key:
+            genai.configure(api_key=api_key)
         self.google = genai.GenerativeModel('gemini-pro')
         self.logger : Logger = dependencies.resolve(Logger)         
 

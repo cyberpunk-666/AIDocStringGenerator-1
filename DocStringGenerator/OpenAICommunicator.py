@@ -27,7 +27,8 @@ class OpenAICommunicator(BaseBotCommunicator):
         self.config = ConfigManager().config
         super().__init__()
         api_key = self.config.get('OPENAI_API_KEY', '')
-        self.client = OpenAI(api_key=api_key)
+        if api_key:
+            self.client = OpenAI(api_key=api_key)
         self.messages = []
         self.messages.append(ChatCompletionSystemMessageParam({'role': 'system', 'content': 'You are a helpful assistant.'}))
 
